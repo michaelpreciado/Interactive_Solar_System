@@ -24,12 +24,71 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTutorialStep = 0;
     let arInitialized = false;
     
+    // Check if device is mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
     // Initialize neural network
     function initializeNeuralNetwork() {
         console.log('Initializing neural network...');
         neuralNetwork = new NeuralNetwork();
         console.log('Neural network initialized with architecture:', neuralNetwork.architecture);
         return neuralNetwork;
+    }
+    
+    // Function to ensure proper AR canvas sizing
+    function ensureProperCanvasSizing() {
+        const canvas = document.querySelector('canvas.a-canvas');
+        const video = document.querySelector('#arjs-video');
+        
+        if (canvas) {
+            console.log('Fixing canvas sizing');
+            // Only set size properties, don't modify transformations
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.position = 'absolute';
+            canvas.style.left = '0';
+            canvas.style.top = '0';
+            // Don't set transform: none as it may interfere with AR.js matrix mode
+        }
+        
+        if (video) {
+            console.log('Fixing video sizing');
+            // Only set size properties, don't modify transformations
+            video.style.width = '100%';
+            video.style.height = '100%';
+            // Don't set object-fit as it may interfere with AR.js
+            video.style.position = 'absolute';
+            video.style.left = '0';
+            video.style.top = '0';
+            // Don't set transform: none as it may interfere with AR.js matrix mode
+        }
+        
+        // For mobile devices, we need to handle orientation changes
+        if (isMobile) {
+            window.addEventListener('resize', () => {
+                if (canvas) {
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                }
+                if (video) {
+                    video.style.width = '100%';
+                    video.style.height = '100%';
+                }
+            });
+            
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => {
+                    if (canvas) {
+                        canvas.style.width = '100%';
+                        canvas.style.height = '100%';
+                    }
+                    if (video) {
+                        video.style.width = '100%';
+                        video.style.height = '100%';
+                    }
+                }, 200);
+            });
+        }
     }
     
     // Initialize AR visualization
@@ -48,6 +107,13 @@ document.addEventListener('DOMContentLoaded', () => {
             hideLoadingScreen();
             showTutorial();
             showInfoPanel(); // Show info panel by default to guide users
+            ensureProperCanvasSizing(); // Ensure canvas is properly sized
+        });
+        
+        // Also listen for scene loaded event
+        document.querySelector('a-scene').addEventListener('loaded', () => {
+            console.log('A-Frame scene loaded');
+            ensureProperCanvasSizing(); // Ensure canvas is properly sized
         });
         
         // Add a timeout to hide loading screen even if AR.js doesn't initialize properly
@@ -289,7 +355,39 @@ document.addEventListener('DOMContentLoaded', () => {
         // Handle errors
         handleErrors();
         
+        // Add a slight delay to ensure proper canvas sizing
+        setTimeout(ensureProperCanvasSizing, 1000);
+        
+        // Fix AR.js camera feed
+        fixARJSCameraFeed();
+        
         console.log('Application initialization complete');
+    }
+    
+    // Fix AR.js camera feed
+    function fixARJSCameraFeed() {
+        // Wait for AR.js to initialize
+        setTimeout(() => {
+            const video = document.querySelector('#arjs-video');
+            if (video) {
+                console.log('Fixing AR.js camera feed');
+                
+                // Force video to use the correct size
+                video.style.width = '100%';
+                video.style.height = '100%';
+                // Don't modify object-fit as it may interfere with AR.js
+                video.style.backgroundColor = 'transparent';
+                
+                // Don't modify filters or transformations as they may be needed by AR.js
+                
+                // Try to restart the video element if it's paused
+                if (video.paused) {
+                    video.play().catch(err => {
+                        console.error('Error playing video:', err);
+                    });
+                }
+            }
+        }, 2000);
     }
     
     // Start the application

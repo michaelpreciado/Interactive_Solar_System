@@ -1,0 +1,67 @@
+/* AR.js specific fixes */
+
+/* Fix for the green screen issue */
+#arjs-video {
+    background-color: transparent !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: -1 !important;
+    /* Don't modify object-fit, filter, or transform as they may be needed by AR.js */
+}
+
+/* Fix for AR canvas */
+.a-canvas {
+    background-color: transparent !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    /* Don't modify filter or transform as they may be needed by AR.js */
+}
+
+/* Fix for AR scene */
+a-scene {
+    background-color: transparent !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+}
+
+/* Fix for iOS devices */
+@supports (-webkit-touch-callout: none) {
+    #arjs-video {
+        object-fit: cover !important;
+    }
+}
+
+/* Fix for Android devices */
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+    #arjs-video {
+        object-fit: cover !important;
+    }
+}
+
+/* Fix for the AR.js loading screen */
+.arjs-loader {
+    position: fixed !important;
+    z-index: 999 !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(0, 0, 0, 0.8) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+/* Hide AR.js debug UI */
+.a-enter-vr, .a-orientation-modal {
+    display: none !important;
+} 

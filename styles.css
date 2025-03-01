@@ -12,6 +12,41 @@ body {
     width: 100vw;
     height: 100vh;
     touch-action: manipulation;
+    background-color: #000; /* Dark background to avoid white space */
+}
+
+/* Make sure the AR scene takes full width */
+a-scene {
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+}
+
+/* Fix for mobile AR view - removing !important flags that might be causing issues */
+canvas.a-canvas {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+/* Fix for AR.js video element - removing object-fit which might be causing the green screen */
+.a-canvas, .a-video {
+    width: 100%;
+    height: 100%;
+}
+
+/* Fix for the white space issue on mobile */
+#arjs-video {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1; /* Ensure video is behind other elements */
 }
 
 /* Loading screen */
@@ -157,11 +192,47 @@ body {
 @media (max-width: 768px) {
     .info-panel {
         bottom: 100px;
+        width: 85%;
     }
     
     .control-btn {
         width: 45px;
         height: 45px;
+    }
+    
+    /* Ensure AR content is properly sized on mobile - removing object-fit */
+    a-scene, canvas.a-canvas, #arjs-video {
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
+        position: absolute;
+    }
+    
+    /* Force full width for AR elements */
+    .arjs-loader, .a-enter-vr, #arjs-video {
+        width: 100%;
+        left: 0;
+    }
+}
+
+/* Additional mobile fixes for smaller screens */
+@media (max-width: 480px) {
+    .tutorial {
+        width: 95%;
+        max-width: none;
+    }
+    
+    .info-panel {
+        width: 95%;
+        max-width: none;
+    }
+    
+    /* Additional fixes for very small screens */
+    body {
+        width: 100vw !important;
+        height: 100vh !important;
+        overflow: hidden !important;
     }
 }
 
