@@ -8,7 +8,9 @@
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
+    right: 0 !important; /* Ensure right side is properly constrained */
     z-index: -1 !important;
+    object-fit: cover !important; /* Ensure video covers the entire screen */
     /* Don't modify object-fit, filter, or transform as they may be needed by AR.js */
 }
 
@@ -20,6 +22,7 @@
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
+    right: 0 !important; /* Ensure right side is properly constrained */
     /* Don't modify filter or transform as they may be needed by AR.js */
 }
 
@@ -31,12 +34,23 @@ a-scene {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
+    right: 0 !important; /* Ensure right side is properly constrained */
 }
 
 /* Fix for iOS devices */
 @supports (-webkit-touch-callout: none) {
     #arjs-video {
         object-fit: cover !important;
+        width: 100% !important;
+        height: 100% !important;
+        right: 0 !important; /* Ensure right side is properly constrained */
+    }
+    
+    body {
+        width: 100% !important;
+        height: 100% !important;
+        position: fixed !important; /* Prevent scrolling on iOS */
+        overflow: hidden !important;
     }
 }
 
@@ -44,6 +58,16 @@ a-scene {
 @media screen and (-webkit-min-device-pixel-ratio:0) {
     #arjs-video {
         object-fit: cover !important;
+        width: 100% !important;
+        height: 100% !important;
+        right: 0 !important; /* Ensure right side is properly constrained */
+    }
+    
+    body {
+        width: 100% !important;
+        height: 100% !important;
+        position: fixed !important; /* Prevent scrolling on Android */
+        overflow: hidden !important;
     }
 }
 
@@ -53,6 +77,7 @@ a-scene {
     z-index: 999 !important;
     top: 0 !important;
     left: 0 !important;
+    right: 0 !important; /* Ensure right side is properly constrained */
     width: 100% !important;
     height: 100% !important;
     background-color: rgba(0, 0, 0, 0.8) !important;

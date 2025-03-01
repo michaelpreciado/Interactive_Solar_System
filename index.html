@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -30,15 +30,37 @@
                     console.log('Fixing AR.js video element');
                     video.style.width = '100%';
                     video.style.height = '100%';
-                    // Don't modify object-fit as it may interfere with AR.js
+                    video.style.objectFit = 'cover';
                     video.style.position = 'absolute';
                     video.style.left = '0';
                     video.style.top = '0';
+                    video.style.right = '0';
                     
-                    // Don't modify filters or transformations as they may be needed by AR.js
-                    video.style.backgroundColor = 'transparent';
+                    // Additional fix for mobile
+                    document.body.style.width = '100%';
+                    document.body.style.height = '100%';
+                    document.body.style.overflow = 'hidden';
+                    document.body.style.position = 'fixed';
                 }
             }, 1000);
+            
+            // Fix for mobile orientation changes
+            window.addEventListener('resize', function() {
+                const video = document.querySelector('#arjs-video');
+                const canvas = document.querySelector('canvas.a-canvas');
+                
+                if (video) {
+                    video.style.width = '100%';
+                    video.style.height = '100%';
+                    video.style.right = '0';
+                }
+                
+                if (canvas) {
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                    canvas.style.right = '0';
+                }
+            });
         });
     </script>
 </head>

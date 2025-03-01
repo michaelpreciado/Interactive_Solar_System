@@ -42,26 +42,30 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (canvas) {
             console.log('Fixing canvas sizing');
-            // Only set size properties, don't modify transformations
             canvas.style.width = '100%';
             canvas.style.height = '100%';
             canvas.style.position = 'absolute';
             canvas.style.left = '0';
             canvas.style.top = '0';
-            // Don't set transform: none as it may interfere with AR.js matrix mode
+            canvas.style.right = '0'; // Ensure right side is properly constrained
         }
         
         if (video) {
             console.log('Fixing video sizing');
-            // Only set size properties, don't modify transformations
             video.style.width = '100%';
             video.style.height = '100%';
-            // Don't set object-fit as it may interfere with AR.js
+            video.style.objectFit = 'cover'; // Ensure video covers the entire screen
             video.style.position = 'absolute';
             video.style.left = '0';
             video.style.top = '0';
-            // Don't set transform: none as it may interfere with AR.js matrix mode
+            video.style.right = '0'; // Ensure right side is properly constrained
         }
+        
+        // Fix for body element
+        document.body.style.width = '100%';
+        document.body.style.height = '100%';
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed'; // Prevent scrolling on mobile
         
         // For mobile devices, we need to handle orientation changes
         if (isMobile) {
@@ -69,11 +73,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (canvas) {
                     canvas.style.width = '100%';
                     canvas.style.height = '100%';
+                    canvas.style.right = '0'; // Ensure right side is properly constrained
                 }
                 if (video) {
                     video.style.width = '100%';
                     video.style.height = '100%';
+                    video.style.right = '0'; // Ensure right side is properly constrained
                 }
+                
+                // Reapply body fixes
+                document.body.style.width = '100%';
+                document.body.style.height = '100%';
+                document.body.style.overflow = 'hidden';
+                document.body.style.position = 'fixed';
             });
             
             window.addEventListener('orientationchange', () => {
@@ -81,11 +93,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (canvas) {
                         canvas.style.width = '100%';
                         canvas.style.height = '100%';
+                        canvas.style.right = '0'; // Ensure right side is properly constrained
                     }
                     if (video) {
                         video.style.width = '100%';
                         video.style.height = '100%';
+                        video.style.right = '0'; // Ensure right side is properly constrained
                     }
+                    
+                    // Reapply body fixes
+                    document.body.style.width = '100%';
+                    document.body.style.height = '100%';
+                    document.body.style.overflow = 'hidden';
+                    document.body.style.position = 'fixed';
                 }, 200);
             });
         }
