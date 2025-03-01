@@ -1,0 +1,24 @@
+{
+  "name": "neural-network-ar-visualizer",
+  "version": "1.0.0",
+  "description": "An augmented reality application that visualizes neural networks in action during inference",
+  "main": "index.html",
+  "scripts": {
+    "start": "http-server -c-1 -p 8080",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ar",
+    "neural-network",
+    "visualization",
+    "augmented-reality",
+    "tensorflow",
+    "mobile"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {}
+} 
