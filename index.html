@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, minimal-ui">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -18,6 +18,50 @@
     <script src="js/neuralNetwork.js" defer></script>
     <script src="js/arVisualization.js" defer></script>
     <script src="js/app.js" defer></script>
+    
+    <!-- Fix for mobile viewport issues -->
+    <script>
+        // Fix for mobile viewport issues
+        function fixMobileViewport() {
+            // Set viewport dimensions
+            const setViewportDimensions = () => {
+                document.documentElement.style.width = window.innerWidth + 'px';
+                document.documentElement.style.height = window.innerHeight + 'px';
+                document.body.style.width = window.innerWidth + 'px';
+                document.body.style.height = window.innerHeight + 'px';
+                
+                // Fix AR elements
+                const arVideo = document.querySelector('#arjs-video');
+                const arCanvas = document.querySelector('canvas.a-canvas');
+                const arScene = document.querySelector('a-scene');
+                
+                if (arVideo) {
+                    arVideo.style.width = window.innerWidth + 'px';
+                    arVideo.style.height = window.innerHeight + 'px';
+                }
+                
+                if (arCanvas) {
+                    arCanvas.style.width = window.innerWidth + 'px';
+                    arCanvas.style.height = window.innerHeight + 'px';
+                }
+                
+                if (arScene) {
+                    arScene.style.width = window.innerWidth + 'px';
+                    arScene.style.height = window.innerHeight + 'px';
+                }
+            };
+            
+            // Initial setup
+            setViewportDimensions();
+            
+            // Update on resize and orientation change
+            window.addEventListener('resize', setViewportDimensions);
+            window.addEventListener('orientationchange', setViewportDimensions);
+        }
+        
+        // Run on load
+        window.addEventListener('load', fixMobileViewport);
+    </script>
     
     <!-- Fix for AR.js video element -->
     <script>
