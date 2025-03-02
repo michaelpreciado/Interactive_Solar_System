@@ -38,10 +38,17 @@
                 const arVideo = document.querySelector('#arjs-video');
                 const arCanvas = document.querySelector('canvas.a-canvas');
                 const arScene = document.querySelector('a-scene');
+                const arCamera = document.querySelector('.a-camera');
+                
+                // Check if we're in portrait mode
+                const isPortrait = window.innerHeight > window.innerWidth;
+                // Check if we're on a narrow viewport
+                const isNarrow = window.innerWidth < 480;
                 
                 if (arVideo) {
-                    arVideo.style.width = window.innerWidth + 'px';
-                    arVideo.style.height = window.innerHeight + 'px';
+                    // Always center the video regardless of orientation
+                    arVideo.style.width = '100vw';
+                    arVideo.style.height = '100vh';
                     arVideo.style.objectFit = 'cover';
                     arVideo.style.position = 'fixed';
                     arVideo.style.top = '0';
@@ -49,26 +56,139 @@
                     arVideo.style.right = '0';
                     arVideo.style.bottom = '0';
                     arVideo.style.zIndex = '-1';
+                    arVideo.style.margin = '0 auto'; // Center horizontally
+                    arVideo.style.objectPosition = '50% 50%'; // Center the video precisely
+                    
+                    // Center video in portrait mode
+                    if (isPortrait) {
+                        // Scale the video slightly to prevent bottom cutoff
+                        arVideo.style.transform = 'scale(1.05)';
+                        arVideo.style.webkitTransform = 'scale(1.05)';
+                        arVideo.style.transformOrigin = 'center center';
+                        arVideo.style.webkitTransformOrigin = 'center center';
+                    } else {
+                        // Reset scaling for landscape mode
+                        arVideo.style.transform = 'none';
+                        arVideo.style.webkitTransform = 'none';
+                    }
+                    
+                    // Apply specific fixes for narrow viewports
+                    if (isNarrow) {
+                        arVideo.style.minWidth = '100vw';
+                        arVideo.style.minHeight = '100vh';
+                        arVideo.style.width = '100vw';
+                        arVideo.style.height = '100vh';
+                        
+                        // Ensure video is visible
+                        arVideo.style.display = 'block';
+                        arVideo.style.visibility = 'visible';
+                        arVideo.style.opacity = '1';
+                        
+                        // Remove any transforms that might affect centering in narrow viewports
+                        arVideo.style.transform = 'none';
+                        arVideo.style.webkitTransform = 'none';
+                        
+                        // Force video to play if paused
+                        if (arVideo.paused) {
+                            arVideo.play().catch(err => {
+                                console.error('Error playing video on narrow viewport:', err);
+                            });
+                        }
+                    }
                 }
                 
                 if (arCanvas) {
-                    arCanvas.style.width = window.innerWidth + 'px';
-                    arCanvas.style.height = window.innerHeight + 'px';
+                    // Always center the canvas regardless of orientation
+                    arCanvas.style.width = '100vw';
+                    arCanvas.style.height = '100vh';
                     arCanvas.style.position = 'fixed';
                     arCanvas.style.top = '0';
                     arCanvas.style.left = '0';
                     arCanvas.style.right = '0';
                     arCanvas.style.bottom = '0';
+                    arCanvas.style.margin = '0 auto'; // Center horizontally
+                    
+                    // In portrait mode, make canvas slightly taller to prevent bottom cutoff
+                    if (isPortrait) {
+                        arCanvas.style.height = '105vh';
+                    }
+                    
+                    // Apply specific fixes for narrow viewports
+                    if (isNarrow) {
+                        arCanvas.style.minWidth = '100vw';
+                        arCanvas.style.minHeight = '100vh';
+                        arCanvas.style.width = '100vw';
+                        arCanvas.style.height = '100vh';
+                    }
                 }
                 
                 if (arScene) {
-                    arScene.style.width = window.innerWidth + 'px';
-                    arScene.style.height = window.innerHeight + 'px';
+                    // Always center the scene regardless of orientation
+                    arScene.style.width = '100vw';
+                    arScene.style.height = '100vh';
                     arScene.style.position = 'fixed';
                     arScene.style.top = '0';
                     arScene.style.left = '0';
                     arScene.style.right = '0';
                     arScene.style.bottom = '0';
+                    arScene.style.margin = '0 auto'; // Center horizontally
+                    
+                    // In portrait mode, make scene slightly taller to prevent bottom cutoff
+                    if (isPortrait) {
+                        arScene.style.height = '105vh';
+                    }
+                    
+                    // Apply specific fixes for narrow viewports
+                    if (isNarrow) {
+                        arScene.style.minWidth = '100vw';
+                        arScene.style.minHeight = '100vh';
+                        arScene.style.width = '100vw';
+                        arScene.style.height = '100vh';
+                    }
+                }
+                
+                // Center camera regardless of orientation
+                if (arCamera) {
+                    arCamera.style.position = 'absolute';
+                    arCamera.style.left = '50%';
+                    arCamera.style.top = isPortrait ? '45%' : '50%'; // Move up slightly in portrait mode
+                    arCamera.style.transform = 'translate(-50%, -50%)';
+                    arCamera.style.width = '100%';
+                    arCamera.style.height = '100%';
+                }
+                
+                // Adjust camera entity position
+                const cameraEntity = document.querySelector('[camera]');
+                if (cameraEntity && isPortrait) {
+                    // Move camera up slightly to prevent bottom cutoff
+                    cameraEntity.setAttribute('position', {x: 0, y: 0.1, z: 0});
+                } else if (cameraEntity) {
+                    // Reset position for landscape mode
+                    cameraEntity.setAttribute('position', {x: 0, y: 0, z: 0});
+                }
+                
+                // Fix for narrow viewports - ensure body and html are properly sized
+                if (isNarrow) {
+                    document.documentElement.style.width = '100vw';
+                    document.documentElement.style.height = '100vh';
+                    document.documentElement.style.minWidth = '100vw';
+                    document.documentElement.style.minHeight = '100vh';
+                    document.documentElement.style.overflow = 'hidden';
+                    document.documentElement.style.margin = '0'; // Remove any margin
+                    document.documentElement.style.padding = '0'; // Remove any padding
+                    
+                    document.body.style.width = '100vw';
+                    document.body.style.height = '100vh';
+                    document.body.style.minWidth = '100vw';
+                    document.body.style.minHeight = '100vh';
+                    document.body.style.overflow = 'hidden';
+                    document.body.style.position = 'fixed';
+                    document.body.style.top = '0';
+                    document.body.style.left = '0';
+                    document.body.style.right = '0';
+                    document.body.style.bottom = '0';
+                    document.body.style.margin = '0'; // Remove any margin
+                    document.body.style.padding = '0'; // Remove any padding
                 }
             };
             
@@ -77,7 +197,82 @@
             
             // Update on resize and orientation change
             window.addEventListener('resize', setViewportDimensions);
-            window.addEventListener('orientationchange', setViewportDimensions);
+            window.addEventListener('orientationchange', () => {
+                // Add a slight delay to ensure orientation has changed
+                setTimeout(setViewportDimensions, 300);
+            });
+            
+            // Update when marker is found
+            document.addEventListener('markerFound', () => {
+                setTimeout(setViewportDimensions, 100);
+            });
+            
+            // Add a periodic check for video and camera centering
+            setInterval(() => {
+                const arVideo = document.querySelector('#arjs-video');
+                const arCamera = document.querySelector('.a-camera');
+                const isPortrait = window.innerHeight > window.innerWidth;
+                const isNarrow = window.innerWidth < 480;
+                
+                // Check if video is properly centered
+                if (arVideo && (arVideo.offsetWidth === 0 || arVideo.style.display === 'none' || 
+                    arVideo.style.visibility === 'hidden' || arVideo.style.objectPosition !== '50% 50%')) {
+                    console.log('Video not properly centered, reapplying fixes');
+                    
+                    // Fix video element
+                    arVideo.style.width = '100vw';
+                    arVideo.style.height = '100vh';
+                    arVideo.style.objectFit = 'cover';
+                    arVideo.style.position = 'fixed';
+                    arVideo.style.top = '0';
+                    arVideo.style.left = '0';
+                    arVideo.style.right = '0';
+                    arVideo.style.bottom = '0';
+                    arVideo.style.zIndex = '-1';
+                    arVideo.style.margin = '0 auto'; // Center horizontally
+                    arVideo.style.objectPosition = '50% 50%'; // Center the video precisely
+                    arVideo.style.display = 'block';
+                    arVideo.style.visibility = 'visible';
+                    arVideo.style.opacity = '1';
+                    
+                    // Apply scaling based on orientation
+                    if (isPortrait && !isNarrow) {
+                        arVideo.style.transform = 'scale(1.05)';
+                        arVideo.style.webkitTransform = 'scale(1.05)';
+                        arVideo.style.transformOrigin = 'center center';
+                        arVideo.style.webkitTransformOrigin = 'center center';
+                    } else {
+                        // Remove transforms in narrow viewports or landscape mode
+                        arVideo.style.transform = 'none';
+                        arVideo.style.webkitTransform = 'none';
+                    }
+                    
+                    // Force video to play if paused
+                    if (arVideo.paused) {
+                        arVideo.play().catch(err => {
+                            console.error('Error playing video:', err);
+                        });
+                    }
+                }
+                
+                // Check if camera is properly centered
+                if (arCamera && (arCamera.offsetWidth === 0 || arCamera.style.display === 'none' || 
+                    arCamera.style.visibility === 'hidden' || arCamera.style.left !== '50%' || 
+                    arCamera.style.transform !== 'translate(-50%, -50%)')) {
+                    console.log('Camera not properly centered, reapplying fixes');
+                    
+                    // Fix camera element
+                    arCamera.style.position = 'absolute';
+                    arCamera.style.left = '50%';
+                    arCamera.style.top = isPortrait ? '45%' : '50%'; // Move up slightly in portrait mode
+                    arCamera.style.transform = 'translate(-50%, -50%)';
+                    arCamera.style.width = '100%';
+                    arCamera.style.height = '100%';
+                    arCamera.style.display = 'block';
+                    arCamera.style.visibility = 'visible';
+                    arCamera.style.opacity = '1';
+                }
+            }, 1000);
         }
         
         // Run on load
@@ -167,31 +362,249 @@
     <!-- A-Frame scene for AR -->
     <a-scene 
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; trackingMethod: best; maxDetectionRate: 30; sourceWidth: 1280; sourceHeight: 960; displayWidth: 1280; displayHeight: 960;"
+        arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best; maxDetectionRate: 30; sourceWidth: 1280; sourceHeight: 960; displayWidth: 1280; displayHeight: 960; cameraParametersUrl: data/camera_para.dat; detectionMode: none;"
         renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true; colorManagement: true; physicallyCorrectLights: false;"
         vr-mode-ui="enabled: false"
         loading-screen="enabled: false"
         device-orientation-permission-ui="enabled: false">
         
-        <!-- Use only the Hiro marker for testing -->
-        <a-marker preset="hiro" id="hiroMarker" markerhandler smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
+        <!-- Container for neural network visualization that can be placed anywhere -->
+        <a-entity id="neuralNetworkContainer" position="0 0 -1" rotation="0 0 0" scale="1 1 1">
             <!-- Neural network visualization will be added here programmatically -->
+        </a-entity>
+        
+        <!-- Optional: Keep the marker-based option as well -->
+        <a-marker preset="hiro" id="hiroMarker" markerhandler smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2" visible="false">
+            <!-- This can be used as an alternative placement method -->
         </a-marker>
         
-        <!-- Camera with user gestures enabled -->
-        <a-entity camera look-controls="enabled: false"></a-entity>
+        <!-- Camera with user gestures enabled and centered in portrait mode -->
+        <a-entity camera look-controls="enabled: true" position="0 0.1 0" camera-center wasd-controls="enabled: true; acceleration: 50"></a-entity>
     </a-scene>
+
+    <!-- Add placement instructions -->
+    <div class="placement-controls" id="placementControls">
+        <button id="placeBtn" class="control-btn">📍 Place Network</button>
+        <button id="resetPositionBtn" class="control-btn">🔄 Reset Position</button>
+    </div>
 
     <div class="tutorial" id="tutorial">
         <div class="tutorial-step active" id="step1">
-            <p>Point your camera at a Hiro marker</p>
+            <p>Click the "Place Network" button to position the neural network</p>
         </div>
         <div class="tutorial-step" id="step2">
-            <p>Watch the neural network appear</p>
+            <p>Watch the neural network appear in your environment</p>
         </div>
         <div class="tutorial-step" id="step3">
             <p>Tap on neurons to see details</p>
         </div>
+        <div class="tutorial-step" id="step4">
+            <p>Use the "Reset Position" button to reposition if needed</p>
+        </div>
     </div>
+
+    <!-- Add custom component for camera centering -->
+    <script>
+        // Register a component to ensure camera is centered
+        AFRAME.registerComponent('camera-center', {
+            init: function() {
+                console.log('Camera center component initialized');
+                
+                // Function to center camera in portrait mode
+                const centerCameraInPortrait = () => {
+                    const isPortrait = window.innerHeight > window.innerWidth;
+                    const isNarrow = window.innerWidth < 480;
+                    
+                    // Always center the camera regardless of orientation
+                    console.log('Centering camera in ' + (isPortrait ? 'portrait' : 'landscape') + ' mode');
+                    const cameraEl = this.el;
+                    if (cameraEl) {
+                        // Move camera up slightly in portrait mode to prevent bottom cutoff
+                        cameraEl.setAttribute('position', {
+                            x: 0, 
+                            y: isPortrait ? 0.1 : 0, 
+                            z: 0
+                        });
+                        
+                        // Apply CSS positioning as well
+                        const cameraDOM = cameraEl.querySelector('.a-camera');
+                        if (cameraDOM) {
+                            cameraDOM.style.position = 'absolute';
+                            cameraDOM.style.left = '50%';
+                            cameraDOM.style.top = isPortrait ? '45%' : '50%'; // Move up slightly in portrait mode
+                            cameraDOM.style.transform = 'translate(-50%, -50%)';
+                            cameraDOM.style.width = '100%';
+                            cameraDOM.style.height = '100%';
+                        }
+                    }
+                    
+                    // Apply specific fixes for narrow viewports
+                    if (isNarrow) {
+                        console.log('Applying narrow viewport camera fixes');
+                        const cameraEl = this.el;
+                        if (cameraEl) {
+                            // Ensure camera is visible in narrow viewports
+                            const cameraDOM = cameraEl.querySelector('.a-camera');
+                            if (cameraDOM) {
+                                cameraDOM.style.width = '100vw';
+                                cameraDOM.style.height = '100vh';
+                                cameraDOM.style.minWidth = '100vw';
+                                cameraDOM.style.minHeight = '100vh';
+                                cameraDOM.style.position = 'absolute';
+                                cameraDOM.style.left = '50%';
+                                cameraDOM.style.top = isPortrait ? '45%' : '50%';
+                                cameraDOM.style.transform = 'translate(-50%, -50%)';
+                                cameraDOM.style.display = 'block';
+                                cameraDOM.style.visibility = 'visible';
+                                cameraDOM.style.opacity = '1';
+                            }
+                        }
+                        
+                        // Fix video element
+                        const video = document.querySelector('#arjs-video');
+                        if (video) {
+                            video.style.minWidth = '100vw';
+                            video.style.minHeight = '100vh';
+                            video.style.width = '100vw';
+                            video.style.height = '100vh';
+                            video.style.position = 'fixed';
+                            video.style.top = '0';
+                            video.style.left = '0';
+                            video.style.right = '0';
+                            video.style.bottom = '0';
+                            video.style.margin = '0 auto'; // Center horizontally
+                            video.style.objectPosition = '50% 50%'; // Center the video precisely
+                            video.style.display = 'block';
+                            video.style.visibility = 'visible';
+                            video.style.opacity = '1';
+                            // Remove any transforms that might affect centering in narrow viewports
+                            video.style.transform = 'none';
+                            video.style.webkitTransform = 'none';
+                        }
+                        
+                        // Fix canvas and scene elements
+                        const canvas = document.querySelector('canvas.a-canvas');
+                        const scene = document.querySelector('a-scene');
+                        
+                        if (canvas) {
+                            canvas.style.minWidth = '100vw';
+                            canvas.style.minHeight = '100vh';
+                            canvas.style.width = '100vw';
+                            canvas.style.height = '100vh';
+                            canvas.style.position = 'fixed';
+                            canvas.style.top = '0';
+                            canvas.style.left = '0';
+                            canvas.style.right = '0';
+                            canvas.style.bottom = '0';
+                            canvas.style.margin = '0 auto'; // Center horizontally
+                        }
+                        
+                        if (scene) {
+                            scene.style.minWidth = '100vw';
+                            scene.style.minHeight = '100vh';
+                            scene.style.width = '100vw';
+                            scene.style.height = '100vh';
+                            scene.style.position = 'fixed';
+                            scene.style.top = '0';
+                            scene.style.left = '0';
+                            scene.style.right = '0';
+                            scene.style.bottom = '0';
+                            scene.style.margin = '0 auto'; // Center horizontally
+                        }
+                        
+                        // Fix body and html elements
+                        document.documentElement.style.width = '100vw';
+                        document.documentElement.style.height = '100vh';
+                        document.documentElement.style.minWidth = '100vw';
+                        document.documentElement.style.minHeight = '100vh';
+                        document.documentElement.style.overflow = 'hidden';
+                        document.documentElement.style.margin = '0'; // Remove any margin
+                        document.documentElement.style.padding = '0'; // Remove any padding
+                        
+                        document.body.style.width = '100vw';
+                        document.body.style.height = '100vh';
+                        document.body.style.minWidth = '100vw';
+                        document.body.style.minHeight = '100vh';
+                        document.body.style.overflow = 'hidden';
+                        document.body.style.position = 'fixed';
+                        document.body.style.top = '0';
+                        document.body.style.left = '0';
+                        document.body.style.right = '0';
+                        document.body.style.bottom = '0';
+                        document.body.style.margin = '0'; // Remove any margin
+                        document.body.style.padding = '0'; // Remove any padding
+                    }
+                };
+                
+                // Center camera initially
+                centerCameraInPortrait();
+                
+                // Center camera on orientation change
+                window.addEventListener('orientationchange', () => {
+                    setTimeout(centerCameraInPortrait, 500);
+                });
+                
+                // Center camera on resize
+                window.addEventListener('resize', () => {
+                    setTimeout(centerCameraInPortrait, 500);
+                });
+                
+                // Add additional event listener for marker detection
+                document.addEventListener('markerFound', () => {
+                    console.log('Marker found, adjusting camera position');
+                    setTimeout(centerCameraInPortrait, 100);
+                });
+                
+                // Add periodic check for camera visibility
+                setInterval(() => {
+                    const isNarrow = window.innerWidth < 480;
+                    const cameraDOM = this.el.querySelector('.a-camera');
+                    
+                    // Always check if camera is centered properly
+                    if (cameraDOM && (cameraDOM.offsetWidth === 0 || cameraDOM.style.display === 'none' || cameraDOM.style.visibility === 'hidden' || 
+                        cameraDOM.style.left !== '50%' || cameraDOM.style.transform !== 'translate(-50%, -50%)')) {
+                        console.log('Camera not properly centered, reapplying fixes');
+                        centerCameraInPortrait();
+                    }
+                    
+                    // Check video element as well
+                    const video = document.querySelector('#arjs-video');
+                    if (video && (video.offsetWidth === 0 || video.style.display === 'none' || video.style.visibility === 'hidden' ||
+                        video.style.objectPosition !== '50% 50%')) {
+                        console.log('Video not properly centered, reapplying fixes');
+                        
+                        // Fix video element
+                        video.style.minWidth = '100vw';
+                        video.style.minHeight = '100vh';
+                        video.style.width = '100vw';
+                        video.style.height = '100vh';
+                        video.style.position = 'fixed';
+                        video.style.top = '0';
+                        video.style.left = '0';
+                        video.style.right = '0';
+                        video.style.bottom = '0';
+                        video.style.margin = '0 auto'; // Center horizontally
+                        video.style.objectPosition = '50% 50%'; // Center the video precisely
+                        video.style.display = 'block';
+                        video.style.visibility = 'visible';
+                        video.style.opacity = '1';
+                        
+                        // Apply scaling based on orientation
+                        const isPortrait = window.innerHeight > window.innerWidth;
+                        if (isPortrait && !isNarrow) {
+                            video.style.transform = 'scale(1.05)';
+                            video.style.webkitTransform = 'scale(1.05)';
+                            video.style.transformOrigin = 'center center';
+                            video.style.webkitTransformOrigin = 'center center';
+                        } else {
+                            // Remove transforms in narrow viewports or landscape mode
+                            video.style.transform = 'none';
+                            video.style.webkitTransform = 'none';
+                        }
+                    }
+                }, 1000);
+            }
+        });
+    </script>
 </body>
 </html> 

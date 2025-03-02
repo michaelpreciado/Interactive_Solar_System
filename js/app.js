@@ -17,12 +17,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetBtn = document.getElementById('resetBtn');
     const tutorial = document.getElementById('tutorial');
     const tutorialSteps = Array.from(document.querySelectorAll('.tutorial-step'));
+    const placeBtn = document.getElementById('placeBtn');
+    const resetPositionBtn = document.getElementById('resetPositionBtn');
     
     // Application state
     let neuralNetwork = null;
     let arVisualizer = null;
     let currentTutorialStep = 0;
     let arInitialized = false;
+    let isMarkerMode = false; // Default to markerless mode
     
     // Check if device is mobile
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -128,6 +131,13 @@ document.addEventListener('DOMContentLoaded', () => {
             showTutorial();
             showInfoPanel(); // Show info panel by default to guide users
             ensureProperCanvasSizing(); // Ensure canvas is properly sized
+            
+            // In markerless mode, we can initialize immediately
+            if (!isMarkerMode) {
+                setTimeout(() => {
+                    initializeMarkerlessAR();
+                }, 1000);
+            }
         });
         
         // Also listen for scene loaded event
@@ -144,16 +154,80 @@ document.addEventListener('DOMContentLoaded', () => {
             showInfoPanel();
         }, 5000);
         
-        // Wait for marker detection
+        // Wait for marker detection (only in marker mode)
         document.addEventListener('markerFound', () => {
             console.log('AR marker found - Hiro marker detected');
-            if (!arInitialized) {
-                console.log('Initializing AR visualization for the first time');
-                arVisualizer.initialize();
+            if (isMarkerMode && !arInitialized) {
+                console.log('Initializing AR visualization for the first time with marker');
+                arVisualizer.initialize(document.querySelector('#hiroMarker'));
                 arInitialized = true;
                 advanceTutorial();
             }
         });
+    }
+    
+    // Initialize markerless AR
+    function initializeMarkerlessAR() {
+        console.log('Initializing markerless AR visualization');
+        const container = document.querySelector('#neuralNetworkContainer');
+        if (container && !arInitialized) {
+            arVisualizer.initialize(container);
+            arInitialized = true;
+            advanceTutorial();
+        }
+    }
+    
+    // Place neural network at current camera position
+    function placeNeuralNetwork() {
+        console.log('Placing neural network at current position');
+        
+        // Get camera position and direction
+        const camera = document.querySelector('[camera]');
+        const cameraPosition = camera.getAttribute('position');
+        const cameraRotation = camera.getAttribute('rotation');
+        
+        // Calculate position in front of the camera
+        const container = document.querySelector('#neuralNetworkContainer');
+        if (container) {
+            // Position the network 1 meter in front of the camera
+            container.setAttribute('position', {
+                x: cameraPosition.x,
+                y: cameraPosition.y - 0.5, // Slightly below eye level
+                z: cameraPosition.z - 1.5  // In front of the camera
+            });
+            
+            // Reset rotation to face the camera
+            container.setAttribute('rotation', {
+                x: 0,
+                y: cameraRotation.y,
+                z: 0
+            });
+            
+            // If not initialized yet, initialize now
+            if (!arInitialized) {
+                initializeMarkerlessAR();
+            } else {
+                // If already initialized, just update the position
+                arVisualizer.updatePosition(container);
+            }
+        }
+    }
+    
+    // Reset neural network position
+    function resetNetworkPosition() {
+        console.log('Resetting neural network position');
+        
+        const container = document.querySelector('#neuralNetworkContainer');
+        if (container) {
+            // Reset to default position
+            container.setAttribute('position', '0 0 -1.5');
+            container.setAttribute('rotation', '0 0 0');
+            
+            // Update visualizer position
+            if (arInitialized) {
+                arVisualizer.updatePosition(container);
+            }
+        }
     }
     
     // Hide loading screen
@@ -257,6 +331,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset button
         resetBtn.addEventListener('click', () => {
             resetVisualization();
+        });
+        
+        // Place button
+        placeBtn.addEventListener('click', () => {
+            placeNeuralNetwork();
+        });
+        
+        // Reset position button
+        resetPositionBtn.addEventListener('click', () => {
+            resetNetworkPosition();
         });
         
         // Handle device orientation changes
@@ -393,23 +477,85 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Fixing AR.js camera feed');
                 
                 // Force video to use the correct size
-                video.style.width = '100%';
-                video.style.height = '100%';
+                video.style.width = '100vw';
+                video.style.height = '100vh';
                 video.style.objectFit = 'cover';
                 video.style.backgroundColor = 'transparent';
-                video.style.position = 'absolute';
+                video.style.position = 'fixed'; // Use fixed positioning for better stability
                 video.style.top = '0';
                 video.style.left = '0';
                 video.style.right = '0';
                 video.style.bottom = '0';
                 video.style.zIndex = '-1';
                 
+                // Center the video in all modes
+                video.style.objectPosition = '50% 50%';
+                video.style.margin = '0 auto'; // Center horizontally
+                video.style.display = 'block'; // Ensure it's displayed as block
+                video.style.visibility = 'visible'; // Ensure it's visible
+                video.style.opacity = '1'; // Ensure it's not transparent
+                
+                // Check if we're in portrait mode
+                const isPortrait = window.innerHeight > window.innerWidth;
+                // Check if we're on a narrow viewport
+                const isNarrow = window.innerWidth < 480;
+                
+                // Apply specific fixes for narrow viewports
+                if (isNarrow) {
+                    console.log('Applying narrow viewport fixes');
+                    video.style.minWidth = '100vw';
+                    video.style.minHeight = '100vh';
+                    video.style.width = '100vw';
+                    video.style.height = '100vh';
+                    video.style.position = 'fixed';
+                    video.style.left = '0';
+                    video.style.right = '0';
+                    video.style.margin = '0 auto'; // Center horizontally
+                    
+                    // Ensure video is visible
+                    video.style.display = 'block';
+                    video.style.visibility = 'visible';
+                    video.style.opacity = '1';
+                    
+                    // Force video to play
+                    if (video.paused) {
+                        video.play().catch(err => {
+                            console.error('Error playing video on narrow viewport:', err);
+                        });
+                    }
+                }
+                
+                if (isPortrait) {
+                    // Scale the video slightly to prevent bottom cutoff
+                    video.style.transform = 'scale(1.05)';
+                    video.style.webkitTransform = 'scale(1.05)';
+                    // Adjust position to ensure center alignment
+                    video.style.transformOrigin = 'center center';
+                    video.style.webkitTransformOrigin = 'center center';
+                    // Ensure video is centered horizontally
+                    video.style.left = '0';
+                    video.style.right = '0';
+                    video.style.margin = '0 auto';
+                }
+                
                 // iOS specific fixes
                 if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
                     console.log('Applying iOS-specific fixes');
                     video.style.position = 'fixed';
-                    video.style.transform = 'none';
-                    video.style.webkitTransform = 'none';
+                    video.style.left = '0';
+                    video.style.right = '0';
+                    video.style.margin = '0 auto'; // Center horizontally
+                    
+                    // For iOS in portrait mode, apply additional scaling
+                    if (isPortrait) {
+                        video.style.transform = 'scale(1.1)';
+                        video.style.webkitTransform = 'scale(1.1)';
+                        video.style.transformOrigin = 'center center';
+                        video.style.webkitTransformOrigin = 'center center';
+                    } else {
+                        video.style.transform = 'none';
+                        video.style.webkitTransform = 'none';
+                    }
                     
                     // Force layout recalculation
                     document.body.style.display = 'none';
@@ -430,23 +576,117 @@ document.addEventListener('DOMContentLoaded', () => {
                 const scene = document.querySelector('a-scene');
                 
                 if (canvas) {
-                    canvas.style.width = '100%';
-                    canvas.style.height = '100%';
-                    canvas.style.position = 'absolute';
+                    canvas.style.width = '100vw';
+                    canvas.style.height = '100vh';
+                    canvas.style.position = 'fixed'; // Use fixed positioning for better stability
                     canvas.style.top = '0';
                     canvas.style.left = '0';
                     canvas.style.right = '0';
                     canvas.style.bottom = '0';
+                    canvas.style.margin = '0 auto'; // Center horizontally
+                    
+                    // In portrait mode, make canvas slightly taller to prevent bottom cutoff
+                    if (isPortrait) {
+                        canvas.style.height = '105vh';
+                    }
+                    
+                    // Apply specific fixes for narrow viewports
+                    if (isNarrow) {
+                        canvas.style.minWidth = '100vw';
+                        canvas.style.minHeight = '100vh';
+                        canvas.style.width = '100vw';
+                        canvas.style.height = '100vh';
+                        canvas.style.position = 'fixed';
+                        canvas.style.left = '0';
+                        canvas.style.right = '0';
+                        canvas.style.margin = '0 auto'; // Center horizontally
+                    }
                 }
                 
                 if (scene) {
-                    scene.style.width = '100%';
-                    scene.style.height = '100%';
-                    scene.style.position = 'absolute';
+                    scene.style.width = '100vw';
+                    scene.style.height = '100vh';
+                    scene.style.position = 'fixed'; // Use fixed positioning for better stability
                     scene.style.top = '0';
                     scene.style.left = '0';
                     scene.style.right = '0';
                     scene.style.bottom = '0';
+                    scene.style.margin = '0 auto'; // Center horizontally
+                    
+                    // In portrait mode, make scene slightly taller to prevent bottom cutoff
+                    if (isPortrait) {
+                        scene.style.height = '105vh';
+                    }
+                    
+                    // Apply specific fixes for narrow viewports
+                    if (isNarrow) {
+                        scene.style.minWidth = '100vw';
+                        scene.style.minHeight = '100vh';
+                        scene.style.width = '100vw';
+                        scene.style.height = '100vh';
+                        scene.style.position = 'fixed';
+                        scene.style.left = '0';
+                        scene.style.right = '0';
+                        scene.style.margin = '0 auto'; // Center horizontally
+                    }
+                }
+                
+                // Center camera in portrait mode
+                if (isPortrait) {
+                    console.log('Applying portrait mode camera centering');
+                    const camera = document.querySelector('.a-camera');
+                    if (camera) {
+                        camera.style.position = 'absolute';
+                        camera.style.left = '50%';
+                        camera.style.top = '50%';
+                        camera.style.transform = 'translate(-50%, -50%)';
+                        
+                        // Adjust camera position to prevent bottom cutoff
+                        const cameraEntity = document.querySelector('[camera]');
+                        if (cameraEntity) {
+                            // Move camera up slightly to prevent bottom cutoff
+                            const currentPosition = cameraEntity.getAttribute('position') || {x: 0, y: 0, z: 0};
+                            cameraEntity.setAttribute('position', {
+                                x: currentPosition.x,
+                                y: currentPosition.y + 0.1, // Move up slightly
+                                z: currentPosition.z
+                            });
+                        }
+                    }
+                } else {
+                    // Center camera in landscape mode too
+                    console.log('Applying landscape mode camera centering');
+                    const camera = document.querySelector('.a-camera');
+                    if (camera) {
+                        camera.style.position = 'absolute';
+                        camera.style.left = '50%';
+                        camera.style.top = '50%';
+                        camera.style.transform = 'translate(-50%, -50%)';
+                    }
+                }
+                
+                // Fix for narrow viewports - ensure body and html are properly sized
+                if (isNarrow) {
+                    document.documentElement.style.width = '100vw';
+                    document.documentElement.style.height = '100vh';
+                    document.documentElement.style.minWidth = '100vw';
+                    document.documentElement.style.minHeight = '100vh';
+                    document.documentElement.style.overflow = 'hidden';
+                    document.documentElement.style.margin = '0'; // Remove any margin
+                    document.documentElement.style.padding = '0'; // Remove any padding
+                    
+                    document.body.style.width = '100vw';
+                    document.body.style.height = '100vh';
+                    document.body.style.minWidth = '100vw';
+                    document.body.style.minHeight = '100vh';
+                    document.body.style.overflow = 'hidden';
+                    document.body.style.position = 'fixed';
+                    document.body.style.top = '0';
+                    document.body.style.left = '0';
+                    document.body.style.right = '0';
+                    document.body.style.bottom = '0';
+                    document.body.style.margin = '0'; // Remove any margin
+                    document.body.style.padding = '0'; // Remove any padding
                 }
             }
         }, 1000);
@@ -470,9 +710,370 @@ document.addEventListener('DOMContentLoaded', () => {
                     video.style.display = 'block';
                     video.style.visibility = 'visible';
                     video.style.opacity = '1';
+                    
+                    // Force correct sizing
+                    video.style.width = '100vw';
+                    video.style.height = '100vh';
+                    video.style.minWidth = '100vw';
+                    video.style.minHeight = '100vh';
+                    video.style.position = 'fixed';
+                    video.style.top = '0';
+                    video.style.left = '0';
+                    video.style.right = '0';
+                    video.style.bottom = '0';
+                    video.style.margin = '0 auto'; // Center horizontally
+                    video.style.objectPosition = '50% 50%'; // Center the video precisely
+                }
+                
+                // Recheck portrait mode camera centering
+                const isPortrait = window.innerHeight > window.innerWidth;
+                if (isPortrait) {
+                    console.log('Reapplying portrait mode camera centering');
+                    const camera = document.querySelector('.a-camera');
+                    if (camera) {
+                        camera.style.position = 'absolute';
+                        camera.style.left = '50%';
+                        camera.style.top = '50%';
+                        camera.style.transform = 'translate(-50%, -50%)';
+                    }
+                    
+                    // Recheck video scaling to prevent bottom cutoff
+                    if (video) {
+                        video.style.transform = 'scale(1.05)';
+                        video.style.webkitTransform = 'scale(1.05)';
+                        video.style.transformOrigin = 'center center';
+                        video.style.webkitTransformOrigin = 'center center';
+                        video.style.left = '0';
+                        video.style.right = '0';
+                        video.style.margin = '0 auto'; // Center horizontally
+                        video.style.objectPosition = '50% 50%'; // Center the video precisely
+                    }
+                } else {
+                    // Center camera in landscape mode too
+                    console.log('Reapplying landscape mode camera centering');
+                    const camera = document.querySelector('.a-camera');
+                    if (camera) {
+                        camera.style.position = 'absolute';
+                        camera.style.left = '50%';
+                        camera.style.top = '50%';
+                        camera.style.transform = 'translate(-50%, -50%)';
+                    }
+                    
+                    // Center video in landscape mode
+                    if (video) {
+                        video.style.left = '0';
+                        video.style.right = '0';
+                        video.style.margin = '0 auto'; // Center horizontally
+                        video.style.objectPosition = '50% 50%'; // Center the video precisely
+                    }
+                }
+                
+                // Check if we're on a narrow viewport
+                const isNarrow = window.innerWidth < 480;
+                if (isNarrow) {
+                    // Reapply narrow viewport fixes
+                    console.log('Reapplying narrow viewport fixes');
+                    
+                    // Fix video element
+                    if (video) {
+                        video.style.minWidth = '100vw';
+                        video.style.minHeight = '100vh';
+                        video.style.width = '100vw';
+                        video.style.height = '100vh';
+                        video.style.position = 'fixed';
+                        video.style.display = 'block';
+                        video.style.visibility = 'visible';
+                        video.style.opacity = '1';
+                        video.style.left = '0';
+                        video.style.right = '0';
+                        video.style.margin = '0 auto'; // Center horizontally
+                        video.style.objectPosition = '50% 50%'; // Center the video precisely
+                        // Remove any transforms that might affect centering
+                        video.style.transform = 'none';
+                        video.style.webkitTransform = 'none';
+                    }
+                    
+                    // Fix canvas and scene elements
+                    const canvas = document.querySelector('canvas.a-canvas');
+                    const scene = document.querySelector('a-scene');
+                    
+                    if (canvas) {
+                        canvas.style.minWidth = '100vw';
+                        canvas.style.minHeight = '100vh';
+                        canvas.style.width = '100vw';
+                        canvas.style.height = '100vh';
+                        canvas.style.position = 'fixed';
+                        canvas.style.left = '0';
+                        canvas.style.right = '0';
+                        canvas.style.margin = '0 auto'; // Center horizontally
+                    }
+                    
+                    if (scene) {
+                        scene.style.minWidth = '100vw';
+                        scene.style.minHeight = '100vh';
+                        scene.style.width = '100vw';
+                        scene.style.height = '100vh';
+                        scene.style.position = 'fixed';
+                        scene.style.left = '0';
+                        scene.style.right = '0';
+                        scene.style.margin = '0 auto'; // Center horizontally
+                    }
+                    
+                    // Fix body and html elements
+                    document.documentElement.style.width = '100vw';
+                    document.documentElement.style.height = '100vh';
+                    document.documentElement.style.minWidth = '100vw';
+                    document.documentElement.style.minHeight = '100vh';
+                    document.documentElement.style.overflow = 'hidden';
+                    document.documentElement.style.margin = '0'; // Remove any margin
+                    document.documentElement.style.padding = '0'; // Remove any padding
+                    
+                    document.body.style.width = '100vw';
+                    document.body.style.height = '100vh';
+                    document.body.style.minWidth = '100vw';
+                    document.body.style.minHeight = '100vh';
+                    document.body.style.overflow = 'hidden';
+                    document.body.style.position = 'fixed';
+                    document.body.style.margin = '0'; // Remove any margin
+                    document.body.style.padding = '0'; // Remove any padding
                 }
             }
         }, 3000);
+        
+        // Add orientation change handler for camera centering
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                const isPortrait = window.innerHeight > window.innerWidth;
+                const video = document.querySelector('#arjs-video');
+                
+                if (video) {
+                    // Always center the video regardless of orientation
+                    video.style.position = 'fixed';
+                    video.style.width = '100vw';
+                    video.style.height = '100vh';
+                    video.style.left = '0';
+                    video.style.right = '0';
+                    video.style.margin = '0 auto'; // Center horizontally
+                    video.style.objectPosition = '50% 50%'; // Center the video precisely
+                    
+                    if (isPortrait) {
+                        console.log('Orientation changed to portrait, centering camera');
+                        // Scale the video slightly to prevent bottom cutoff
+                        video.style.transform = 'scale(1.05)';
+                        video.style.webkitTransform = 'scale(1.05)';
+                        video.style.transformOrigin = 'center center';
+                        video.style.webkitTransformOrigin = 'center center';
+                    } else {
+                        // Reset scaling for landscape mode
+                        video.style.transform = 'none';
+                        video.style.webkitTransform = 'none';
+                    }
+                }
+                
+                // Center camera regardless of orientation
+                const camera = document.querySelector('.a-camera');
+                if (camera) {
+                    camera.style.position = 'absolute';
+                    camera.style.left = '50%';
+                    camera.style.top = isPortrait ? '45%' : '50%'; // Move up slightly in portrait mode
+                    camera.style.transform = 'translate(-50%, -50%)';
+                }
+                
+                // Adjust canvas and scene elements
+                const canvas = document.querySelector('canvas.a-canvas');
+                const scene = document.querySelector('a-scene');
+                
+                if (canvas) {
+                    canvas.style.position = 'fixed';
+                    canvas.style.width = '100vw';
+                    canvas.style.height = isPortrait ? '105vh' : '100vh';
+                    canvas.style.left = '0';
+                    canvas.style.right = '0';
+                    canvas.style.margin = '0 auto'; // Center horizontally
+                }
+                
+                if (scene) {
+                    scene.style.position = 'fixed';
+                    scene.style.width = '100vw';
+                    scene.style.height = isPortrait ? '105vh' : '100vh';
+                    scene.style.left = '0';
+                    scene.style.right = '0';
+                    scene.style.margin = '0 auto'; // Center horizontally
+                }
+                
+                // Check if we're on a narrow viewport
+                const isNarrow = window.innerWidth < 480;
+                if (isNarrow) {
+                    console.log('Orientation changed on narrow viewport, applying fixes');
+                    
+                    // Fix video element
+                    if (video) {
+                        video.style.minWidth = '100vw';
+                        video.style.minHeight = '100vh';
+                        video.style.width = '100vw';
+                        video.style.height = '100vh';
+                        video.style.position = 'fixed';
+                        video.style.display = 'block';
+                        video.style.visibility = 'visible';
+                        video.style.opacity = '1';
+                        video.style.left = '0';
+                        video.style.right = '0';
+                        video.style.margin = '0 auto'; // Center horizontally
+                        video.style.objectPosition = '50% 50%'; // Center the video precisely
+                        // Remove any transforms that might affect centering
+                        video.style.transform = 'none';
+                        video.style.webkitTransform = 'none';
+                    }
+                    
+                    // Fix canvas and scene elements
+                    if (canvas) {
+                        canvas.style.minWidth = '100vw';
+                        canvas.style.minHeight = '100vh';
+                        canvas.style.width = '100vw';
+                        canvas.style.height = '100vh';
+                        canvas.style.position = 'fixed';
+                        canvas.style.left = '0';
+                        canvas.style.right = '0';
+                        canvas.style.margin = '0 auto'; // Center horizontally
+                    }
+                    
+                    if (scene) {
+                        scene.style.minWidth = '100vw';
+                        scene.style.minHeight = '100vh';
+                        scene.style.width = '100vw';
+                        scene.style.height = '100vh';
+                        scene.style.position = 'fixed';
+                        scene.style.left = '0';
+                        scene.style.right = '0';
+                        scene.style.margin = '0 auto'; // Center horizontally
+                    }
+                    
+                    // Fix body and html elements
+                    document.documentElement.style.width = '100vw';
+                    document.documentElement.style.height = '100vh';
+                    document.documentElement.style.minWidth = '100vw';
+                    document.documentElement.style.minHeight = '100vh';
+                    document.documentElement.style.overflow = 'hidden';
+                    document.documentElement.style.margin = '0'; // Remove any margin
+                    document.documentElement.style.padding = '0'; // Remove any padding
+                    
+                    document.body.style.width = '100vw';
+                    document.body.style.height = '100vh';
+                    document.body.style.minWidth = '100vw';
+                    document.body.style.minHeight = '100vh';
+                    document.body.style.overflow = 'hidden';
+                    document.body.style.position = 'fixed';
+                    document.body.style.margin = '0'; // Remove any margin
+                    document.body.style.padding = '0'; // Remove any padding
+                }
+            }, 500);
+        });
+        
+        // Add resize handler for narrow viewport detection
+        window.addEventListener('resize', () => {
+            const video = document.querySelector('#arjs-video');
+            const isPortrait = window.innerHeight > window.innerWidth;
+            const isNarrow = window.innerWidth < 480;
+            
+            // Always center the video regardless of viewport size
+            if (video) {
+                video.style.position = 'fixed';
+                video.style.width = '100vw';
+                video.style.height = '100vh';
+                video.style.left = '0';
+                video.style.right = '0';
+                video.style.margin = '0 auto'; // Center horizontally
+                video.style.objectPosition = '50% 50%'; // Center the video precisely
+                
+                if (isPortrait) {
+                    // Scale the video slightly to prevent bottom cutoff
+                    video.style.transform = 'scale(1.05)';
+                    video.style.webkitTransform = 'scale(1.05)';
+                    video.style.transformOrigin = 'center center';
+                    video.style.webkitTransformOrigin = 'center center';
+                } else {
+                    // Reset scaling for landscape mode
+                    video.style.transform = 'none';
+                    video.style.webkitTransform = 'none';
+                }
+            }
+            
+            // Center camera regardless of viewport size
+            const camera = document.querySelector('.a-camera');
+            if (camera) {
+                camera.style.position = 'absolute';
+                camera.style.left = '50%';
+                camera.style.top = isPortrait ? '45%' : '50%'; // Move up slightly in portrait mode
+                camera.style.transform = 'translate(-50%, -50%)';
+            }
+            
+            if (isNarrow) {
+                console.log('Detected narrow viewport on resize, applying fixes');
+                
+                // Fix video element
+                if (video) {
+                    video.style.minWidth = '100vw';
+                    video.style.minHeight = '100vh';
+                    video.style.width = '100vw';
+                    video.style.height = '100vh';
+                    video.style.position = 'fixed';
+                    video.style.display = 'block';
+                    video.style.visibility = 'visible';
+                    video.style.opacity = '1';
+                    video.style.left = '0';
+                    video.style.right = '0';
+                    video.style.margin = '0 auto'; // Center horizontally
+                    video.style.objectPosition = '50% 50%'; // Center the video precisely
+                    // Remove any transforms that might affect centering in narrow viewports
+                    video.style.transform = 'none';
+                    video.style.webkitTransform = 'none';
+                }
+                
+                // Fix canvas and scene elements
+                const canvas = document.querySelector('canvas.a-canvas');
+                const scene = document.querySelector('a-scene');
+                
+                if (canvas) {
+                    canvas.style.minWidth = '100vw';
+                    canvas.style.minHeight = '100vh';
+                    canvas.style.width = '100vw';
+                    canvas.style.height = '100vh';
+                    canvas.style.position = 'fixed';
+                    canvas.style.left = '0';
+                    canvas.style.right = '0';
+                    canvas.style.margin = '0 auto'; // Center horizontally
+                }
+                
+                if (scene) {
+                    scene.style.minWidth = '100vw';
+                    scene.style.minHeight = '100vh';
+                    scene.style.width = '100vw';
+                    scene.style.height = '100vh';
+                    scene.style.position = 'fixed';
+                    scene.style.left = '0';
+                    scene.style.right = '0';
+                    scene.style.margin = '0 auto'; // Center horizontally
+                }
+                
+                // Fix body and html elements
+                document.documentElement.style.width = '100vw';
+                document.documentElement.style.height = '100vh';
+                document.documentElement.style.minWidth = '100vw';
+                document.documentElement.style.minHeight = '100vh';
+                document.documentElement.style.overflow = 'hidden';
+                document.documentElement.style.margin = '0'; // Remove any margin
+                document.documentElement.style.padding = '0'; // Remove any padding
+                
+                document.body.style.width = '100vw';
+                document.body.style.height = '100vh';
+                document.body.style.minWidth = '100vw';
+                document.body.style.minHeight = '100vh';
+                document.body.style.overflow = 'hidden';
+                document.body.style.position = 'fixed';
+                document.body.style.margin = '0'; // Remove any margin
+                document.body.style.padding = '0'; // Remove any padding
+            }
+        });
     }
     
     // Start the application

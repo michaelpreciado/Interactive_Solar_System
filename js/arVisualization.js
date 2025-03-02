@@ -50,8 +50,9 @@ class ARNeuralNetworkVisualizer {
     
     /**
      * Initialize the AR visualization
+     * @param {HTMLElement} container - The container element to attach the visualization to
      */
-    initialize() {
+    initialize(container) {
         if (this.isInitialized) return;
         
         console.log('Initializing AR visualization...');
@@ -59,10 +60,10 @@ class ARNeuralNetworkVisualizer {
         try {
             // Create a container entity for the neural network
             this.container = document.createElement('a-entity');
-            this.container.setAttribute('position', '0 0.5 0'); // Raised position for better visibility
+            this.container.setAttribute('position', '0 0 0'); // Position will be relative to parent
             this.container.setAttribute('scale', `${this.settings.scale} ${this.settings.scale} ${this.settings.scale}`);
             this.container.setAttribute('rotation', '-90 0 0'); // Rotate to face up
-            this.container.id = 'neural-network-container';
+            this.container.id = 'neural-network-visualization';
             
             // Add holographic ambient light if enabled
             if (this.settings.hologramEffect) {
@@ -80,52 +81,34 @@ class ARNeuralNetworkVisualizer {
                 pointLight.setAttribute('intensity', '0.7');
                 pointLight.setAttribute('position', '0 0.5 0');
                 this.container.appendChild(pointLight);
-            }
-            
-            // Create tensor cube container
-            this._createTensorCube();
-            
-            // Add to Hiro marker
-            const hiroMarker = document.getElementById('hiroMarker');
-            if (hiroMarker) {
-                console.log('Found Hiro marker, adding neural network container');
                 
-                // Make sure the marker is ready before adding content
-                if (hiroMarker.object3D && hiroMarker.object3D.visible) {
-                    hiroMarker.appendChild(this.container);
-                } else {
-                    console.log('Marker not visible yet, waiting for visibility');
-                    // Wait for marker to be visible before adding content
-                    const checkMarkerVisibility = () => {
-                        if (hiroMarker.object3D && hiroMarker.object3D.visible) {
-                            hiroMarker.appendChild(this.container);
-                            console.log('Added neural network to now-visible marker');
-                        } else {
-                            setTimeout(checkMarkerVisibility, 500);
-                        }
-                    };
-                    setTimeout(checkMarkerVisibility, 500);
-                }
-            } else {
-                console.error('Hiro marker not found in the DOM');
-                return;
+                // Add a tensor cube to represent the neural network as a whole
+                this.createTensorCube();
             }
             
-            // Create the neural network visualization
-            this._createNeurons();
-            this._createConnections();
+            // Create neurons and connections
+            this.createNeurons();
+            this.createConnections();
+            
+            // Attach to the provided container
+            if (container) {
+                container.appendChild(this.container);
+            } else {
+                // Fallback to marker if no container provided
+                const marker = document.querySelector('a-marker');
+                if (marker) {
+                    marker.appendChild(this.container);
+                } else {
+                    console.error('No container or marker found for AR visualization');
+                    return;
+                }
+            }
+            
+            // Start the neural network inference animation
+            this.neuralNetwork.startInferenceAnimation();
             
             this.isInitialized = true;
-            
-            // Start the animation after a short delay
-            setTimeout(() => {
-                console.log('Starting inference animation');
-                if (this.neuralNetwork) {
-                    this.neuralNetwork.startInferenceAnimation();
-                } else {
-                    console.error('Neural network not available for animation');
-                }
-            }, 2000);
+            console.log('AR visualization initialized successfully');
         } catch (error) {
             console.error('Error initializing AR visualization:', error);
         }
@@ -134,7 +117,7 @@ class ARNeuralNetworkVisualizer {
     /**
      * Create a tensor cube to contain the neural network
      */
-    _createTensorCube() {
+    createTensorCube() {
         try {
             // Create the tensor cube
             this.tensorCube = document.createElement('a-box');
@@ -178,7 +161,7 @@ class ARNeuralNetworkVisualizer {
     /**
      * Create neurons for each layer of the network
      */
-    _createNeurons() {
+    createNeurons() {
         try {
             console.log('Creating neurons...');
             
@@ -266,7 +249,7 @@ class ARNeuralNetworkVisualizer {
     /**
      * Create connections between neurons
      */
-    _createConnections() {
+    createConnections() {
         try {
             console.log('Creating connections...');
             this.connections = [];
@@ -580,6 +563,22 @@ class ARNeuralNetworkVisualizer {
             console.log('AR visualization disposed');
         } catch (error) {
             console.error('Error disposing AR visualization:', error);
+        }
+    }
+
+    /**
+     * Update the position of the visualization
+     * @param {HTMLElement} container - The container element to update
+     */
+    updatePosition(container) {
+        if (!this.isInitialized || !this.container) return;
+        
+        console.log('Updating neural network position');
+        
+        // If the container has changed, reattach
+        if (container && this.container.parentNode !== container) {
+            this.container.parentNode.removeChild(this.container);
+            container.appendChild(this.container);
         }
     }
 }
