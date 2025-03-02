@@ -13,7 +13,7 @@ class ARNeuralNetworkVisualizer {
         // Visualization settings
         this.settings = {
             neuronRadius: 0.04,
-            layerDistance: 0.2,         // Reduced to make more compact horizontally
+            layerDistance: 0.35,         // Increased from 0.2 to make wider horizontally
             neuronVerticalSpacing: 0.25, // Increased for more vertical spacing
             connectionWidth: 0.005,
             activeConnectionWidth: 0.01,
@@ -26,9 +26,9 @@ class ARNeuralNetworkVisualizer {
             activeConnectionColor: '#ff5722',
             neuronOpacity: 0.7,
             connectionOpacity: 0.5,
-            scale: 1.5,                 // Increased overall scale
+            scale: 1.3,                 // Slightly reduced from 1.5 to compensate for wider spacing
             hologramEffect: true,
-            tensorCubeSize: 1.8,        // Size of the tensor cube
+            tensorCubeSize: 2.2,        // Increased from 1.8 to make the cube larger
             tensorCubeColor: '#80c0ff',
             tensorCubeOpacity: 0.15
         };
@@ -59,7 +59,7 @@ class ARNeuralNetworkVisualizer {
         try {
             // Create a container entity for the neural network
             this.container = document.createElement('a-entity');
-            this.container.setAttribute('position', '0 0.5 0'); // Raised position for better visibility
+            this.container.setAttribute('position', '0 0.6 0'); // Raised position for better visibility (increased from 0.5)
             this.container.setAttribute('scale', `${this.settings.scale} ${this.settings.scale} ${this.settings.scale}`);
             this.container.setAttribute('rotation', '-90 0 0'); // Rotate to face up
             this.container.id = 'neural-network-container';
@@ -242,7 +242,7 @@ class ARNeuralNetworkVisualizer {
                         text.setAttribute('value', labelText);
                         text.setAttribute('position', `${x} ${y + this.settings.neuronRadius * 1.5} 0`);
                         text.setAttribute('align', 'center');
-                        text.setAttribute('width', '2');
+                        text.setAttribute('width', '1.5'); // Reduced from 2 to fit better in the wider layout
                         text.setAttribute('color', neuronColor);
                         this.container.appendChild(text);
                     }
