@@ -395,10 +395,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Force video to use the correct size
                 video.style.width = '100%';
                 video.style.height = '100%';
-                // Don't modify object-fit as it may interfere with AR.js
+                video.style.objectFit = 'cover';
                 video.style.backgroundColor = 'transparent';
+                video.style.position = 'absolute';
+                video.style.top = '0';
+                video.style.left = '0';
+                video.style.right = '0';
+                video.style.bottom = '0';
+                video.style.zIndex = '-1';
                 
-                // Don't modify filters or transformations as they may be needed by AR.js
+                // iOS specific fixes
+                if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                    console.log('Applying iOS-specific fixes');
+                    video.style.position = 'fixed';
+                    video.style.transform = 'none';
+                    video.style.webkitTransform = 'none';
+                    
+                    // Force layout recalculation
+                    document.body.style.display = 'none';
+                    setTimeout(() => {
+                        document.body.style.display = '';
+                    }, 10);
+                }
                 
                 // Try to restart the video element if it's paused
                 if (video.paused) {
@@ -406,8 +424,55 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.error('Error playing video:', err);
                     });
                 }
+                
+                // Fix canvas and scene elements as well
+                const canvas = document.querySelector('canvas.a-canvas');
+                const scene = document.querySelector('a-scene');
+                
+                if (canvas) {
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                    canvas.style.position = 'absolute';
+                    canvas.style.top = '0';
+                    canvas.style.left = '0';
+                    canvas.style.right = '0';
+                    canvas.style.bottom = '0';
+                }
+                
+                if (scene) {
+                    scene.style.width = '100%';
+                    scene.style.height = '100%';
+                    scene.style.position = 'absolute';
+                    scene.style.top = '0';
+                    scene.style.left = '0';
+                    scene.style.right = '0';
+                    scene.style.bottom = '0';
+                }
             }
-        }, 2000);
+        }, 1000);
+        
+        // Run a second check after a longer delay to ensure fixes are applied
+        setTimeout(() => {
+            const video = document.querySelector('#arjs-video');
+            if (video) {
+                console.log('Running secondary camera feed fix check');
+                
+                // Check if video is visible and playing
+                if (video.paused || video.style.display === 'none' || video.offsetWidth === 0) {
+                    console.log('Video still not playing properly, applying additional fixes');
+                    
+                    // Force video to play
+                    video.play().catch(err => {
+                        console.error('Error playing video on second attempt:', err);
+                    });
+                    
+                    // Ensure video is visible
+                    video.style.display = 'block';
+                    video.style.visibility = 'visible';
+                    video.style.opacity = '1';
+                }
+            }
+        }, 3000);
     }
     
     // Start the application

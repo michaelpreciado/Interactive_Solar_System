@@ -6,6 +6,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Additional iOS camera permission meta tags -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="apple-mobile-web-app-title" content="Neural Network AR">
+    <meta name="theme-color" content="#000000">
     <title>Neural Network AR Visualizer</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="ar-fixes.css">
@@ -38,16 +42,33 @@
                 if (arVideo) {
                     arVideo.style.width = window.innerWidth + 'px';
                     arVideo.style.height = window.innerHeight + 'px';
+                    arVideo.style.objectFit = 'cover';
+                    arVideo.style.position = 'fixed';
+                    arVideo.style.top = '0';
+                    arVideo.style.left = '0';
+                    arVideo.style.right = '0';
+                    arVideo.style.bottom = '0';
+                    arVideo.style.zIndex = '-1';
                 }
                 
                 if (arCanvas) {
                     arCanvas.style.width = window.innerWidth + 'px';
                     arCanvas.style.height = window.innerHeight + 'px';
+                    arCanvas.style.position = 'fixed';
+                    arCanvas.style.top = '0';
+                    arCanvas.style.left = '0';
+                    arCanvas.style.right = '0';
+                    arCanvas.style.bottom = '0';
                 }
                 
                 if (arScene) {
                     arScene.style.width = window.innerWidth + 'px';
                     arScene.style.height = window.innerHeight + 'px';
+                    arScene.style.position = 'fixed';
+                    arScene.style.top = '0';
+                    arScene.style.left = '0';
+                    arScene.style.right = '0';
+                    arScene.style.bottom = '0';
                 }
             };
             
@@ -75,16 +96,28 @@
                     video.style.width = '100%';
                     video.style.height = '100%';
                     video.style.objectFit = 'cover';
-                    video.style.position = 'absolute';
+                    video.style.position = 'fixed';
                     video.style.left = '0';
                     video.style.top = '0';
                     video.style.right = '0';
+                    video.style.bottom = '0';
+                    video.style.zIndex = '-1';
+                    
+                    // Additional iOS fixes
+                    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                        video.style.transform = 'none';
+                        video.style.webkitTransform = 'none';
+                    }
                     
                     // Additional fix for mobile
                     document.body.style.width = '100%';
                     document.body.style.height = '100%';
                     document.body.style.overflow = 'hidden';
                     document.body.style.position = 'fixed';
+                    document.body.style.top = '0';
+                    document.body.style.left = '0';
+                    document.body.style.right = '0';
+                    document.body.style.bottom = '0';
                 }
             }, 1000);
             
@@ -97,12 +130,14 @@
                     video.style.width = '100%';
                     video.style.height = '100%';
                     video.style.right = '0';
+                    video.style.bottom = '0';
                 }
                 
                 if (canvas) {
                     canvas.style.width = '100%';
                     canvas.style.height = '100%';
                     canvas.style.right = '0';
+                    canvas.style.bottom = '0';
                 }
             });
         });
@@ -132,17 +167,19 @@
     <!-- A-Frame scene for AR -->
     <a-scene 
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; trackingMethod: best; maxDetectionRate: 30;"
-        renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true;"
-        vr-mode-ui="enabled: false">
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; trackingMethod: best; maxDetectionRate: 30; sourceWidth: 1280; sourceHeight: 960; displayWidth: 1280; displayHeight: 960;"
+        renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true; colorManagement: true; physicallyCorrectLights: false;"
+        vr-mode-ui="enabled: false"
+        loading-screen="enabled: false"
+        device-orientation-permission-ui="enabled: false">
         
         <!-- Use only the Hiro marker for testing -->
-        <a-marker preset="hiro" id="hiroMarker" markerhandler>
+        <a-marker preset="hiro" id="hiroMarker" markerhandler smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
             <!-- Neural network visualization will be added here programmatically -->
         </a-marker>
         
         <!-- Camera with user gestures enabled -->
-        <a-entity camera></a-entity>
+        <a-entity camera look-controls="enabled: false"></a-entity>
     </a-scene>
 
     <div class="tutorial" id="tutorial">
