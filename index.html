@@ -339,11 +339,13 @@
     </script>
 </head>
 <body>
-    <div class="loading-screen" id="loadingScreen">
+    <div id="loadingScreen" class="loading-screen">
         <div class="loading-content">
             <h1>Neural Network AR Visualizer</h1>
-            <div class="spinner"></div>
-            <p>Loading AR experience...</p>
+            <p>Loading experience...</p>
+            <div class="loading-spinner"></div>
+            <p class="loading-tip">Point your camera at a Hiro marker when ready</p>
+            <button id="cameraAccessBtn" class="camera-access-btn">Grant Camera Access</button>
         </div>
     </div>
 
@@ -362,44 +364,30 @@
     <!-- A-Frame scene for AR -->
     <a-scene 
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best; maxDetectionRate: 30; sourceWidth: 1280; sourceHeight: 960; displayWidth: 1280; displayHeight: 960; cameraParametersUrl: data/camera_para.dat; detectionMode: none;"
-        renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true; colorManagement: true; physicallyCorrectLights: false;"
+        arjs="sourceType: webcam; debugUIEnabled: true; detectionMode: mono_and_matrix; maxDetectionRate: 30;"
+        renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true;"
         vr-mode-ui="enabled: false"
         loading-screen="enabled: false"
-        device-orientation-permission-ui="enabled: false">
+        device-orientation-permission-ui="enabled: true">
         
-        <!-- Container for neural network visualization that can be placed anywhere -->
-        <a-entity id="neuralNetworkContainer" position="0 0 -1" rotation="0 0 0" scale="1 1 1">
+        <!-- Use only the Hiro marker for testing -->
+        <a-marker preset="hiro" id="hiroMarker" markerhandler smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
             <!-- Neural network visualization will be added here programmatically -->
-        </a-entity>
-        
-        <!-- Optional: Keep the marker-based option as well -->
-        <a-marker preset="hiro" id="hiroMarker" markerhandler smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2" visible="false">
-            <!-- This can be used as an alternative placement method -->
         </a-marker>
         
         <!-- Camera with user gestures enabled and centered in portrait mode -->
-        <a-entity camera look-controls="enabled: true" position="0 0.1 0" camera-center wasd-controls="enabled: true; acceleration: 50"></a-entity>
+        <a-entity camera look-controls="enabled: false" position="0 0.1 0" camera-center></a-entity>
     </a-scene>
-
-    <!-- Add placement instructions -->
-    <div class="placement-controls" id="placementControls">
-        <button id="placeBtn" class="control-btn">📍 Place Network</button>
-        <button id="resetPositionBtn" class="control-btn">🔄 Reset Position</button>
-    </div>
 
     <div class="tutorial" id="tutorial">
         <div class="tutorial-step active" id="step1">
-            <p>Click the "Place Network" button to position the neural network</p>
+            <p>Point your camera at a Hiro marker</p>
         </div>
         <div class="tutorial-step" id="step2">
-            <p>Watch the neural network appear in your environment</p>
+            <p>Watch the neural network appear</p>
         </div>
         <div class="tutorial-step" id="step3">
             <p>Tap on neurons to see details</p>
-        </div>
-        <div class="tutorial-step" id="step4">
-            <p>Use the "Reset Position" button to reposition if needed</p>
         </div>
     </div>
 

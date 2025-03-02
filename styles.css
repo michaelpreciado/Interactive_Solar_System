@@ -72,33 +72,52 @@ canvas.a-canvas {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
-    transition: opacity 0.5s ease-in-out;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
 }
 
 .loading-content {
     text-align: center;
     color: white;
     padding: 20px;
+    max-width: 80%;
 }
 
-.loading-content h1 {
-    margin-bottom: 20px;
-    font-size: 24px;
-}
-
-.spinner {
-    width: 50px;
-    height: 50px;
+.loading-spinner {
     border: 5px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
-    border-top-color: #fff;
-    animation: spin 1s ease-in-out infinite;
-    margin: 0 auto 20px;
+    border-top: 5px solid #fff;
+    width: 50px;
+    height: 50px;
+    margin: 20px auto;
+    animation: spin 1s linear infinite;
+}
+
+.loading-tip {
+    margin-top: 20px;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.camera-access-btn {
+    margin-top: 20px;
+    padding: 12px 24px;
+    background-color: #4285f4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.camera-access-btn:hover {
+    background-color: #3367d6;
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* Info panel */
@@ -340,30 +359,4 @@ canvas.a-canvas {
     border-radius: 5px;
     font-size: 14px;
     cursor: pointer;
-}
-
-/* Placement controls */
-.placement-controls {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
-    z-index: 1000;
-}
-
-.placement-controls .control-btn {
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    border: none;
-    border-radius: 20px;
-    padding: 10px 15px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.placement-controls .control-btn:hover {
-    background-color: rgba(0, 0, 0, 0.9);
 } 

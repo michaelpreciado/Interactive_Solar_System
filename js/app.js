@@ -17,15 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetBtn = document.getElementById('resetBtn');
     const tutorial = document.getElementById('tutorial');
     const tutorialSteps = Array.from(document.querySelectorAll('.tutorial-step'));
-    const placeBtn = document.getElementById('placeBtn');
-    const resetPositionBtn = document.getElementById('resetPositionBtn');
+    const cameraAccessBtn = document.getElementById('cameraAccessBtn');
     
     // Application state
     let neuralNetwork = null;
     let arVisualizer = null;
     let currentTutorialStep = 0;
     let arInitialized = false;
-    let isMarkerMode = false; // Default to markerless mode
+    let cameraPermissionRequested = false;
     
     // Check if device is mobile
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -131,13 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showTutorial();
             showInfoPanel(); // Show info panel by default to guide users
             ensureProperCanvasSizing(); // Ensure canvas is properly sized
-            
-            // In markerless mode, we can initialize immediately
-            if (!isMarkerMode) {
-                setTimeout(() => {
-                    initializeMarkerlessAR();
-                }, 1000);
-            }
         });
         
         // Also listen for scene loaded event
@@ -154,80 +146,16 @@ document.addEventListener('DOMContentLoaded', () => {
             showInfoPanel();
         }, 5000);
         
-        // Wait for marker detection (only in marker mode)
+        // Wait for marker detection
         document.addEventListener('markerFound', () => {
             console.log('AR marker found - Hiro marker detected');
-            if (isMarkerMode && !arInitialized) {
-                console.log('Initializing AR visualization for the first time with marker');
-                arVisualizer.initialize(document.querySelector('#hiroMarker'));
+            if (!arInitialized) {
+                console.log('Initializing AR visualization for the first time');
+                arVisualizer.initialize();
                 arInitialized = true;
                 advanceTutorial();
             }
         });
-    }
-    
-    // Initialize markerless AR
-    function initializeMarkerlessAR() {
-        console.log('Initializing markerless AR visualization');
-        const container = document.querySelector('#neuralNetworkContainer');
-        if (container && !arInitialized) {
-            arVisualizer.initialize(container);
-            arInitialized = true;
-            advanceTutorial();
-        }
-    }
-    
-    // Place neural network at current camera position
-    function placeNeuralNetwork() {
-        console.log('Placing neural network at current position');
-        
-        // Get camera position and direction
-        const camera = document.querySelector('[camera]');
-        const cameraPosition = camera.getAttribute('position');
-        const cameraRotation = camera.getAttribute('rotation');
-        
-        // Calculate position in front of the camera
-        const container = document.querySelector('#neuralNetworkContainer');
-        if (container) {
-            // Position the network 1 meter in front of the camera
-            container.setAttribute('position', {
-                x: cameraPosition.x,
-                y: cameraPosition.y - 0.5, // Slightly below eye level
-                z: cameraPosition.z - 1.5  // In front of the camera
-            });
-            
-            // Reset rotation to face the camera
-            container.setAttribute('rotation', {
-                x: 0,
-                y: cameraRotation.y,
-                z: 0
-            });
-            
-            // If not initialized yet, initialize now
-            if (!arInitialized) {
-                initializeMarkerlessAR();
-            } else {
-                // If already initialized, just update the position
-                arVisualizer.updatePosition(container);
-            }
-        }
-    }
-    
-    // Reset neural network position
-    function resetNetworkPosition() {
-        console.log('Resetting neural network position');
-        
-        const container = document.querySelector('#neuralNetworkContainer');
-        if (container) {
-            // Reset to default position
-            container.setAttribute('position', '0 0 -1.5');
-            container.setAttribute('rotation', '0 0 0');
-            
-            // Update visualizer position
-            if (arInitialized) {
-                arVisualizer.updatePosition(container);
-            }
-        }
     }
     
     // Hide loading screen
@@ -318,6 +246,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupEventListeners() {
         console.log('Setting up event listeners');
         
+        // Camera access button
+        if (cameraAccessBtn) {
+            cameraAccessBtn.addEventListener('click', () => {
+                console.log('Camera access button clicked');
+                requestCameraPermission();
+            });
+        }
+        
         // Info button
         infoBtn.addEventListener('click', () => {
             showInfoPanel();
@@ -331,16 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset button
         resetBtn.addEventListener('click', () => {
             resetVisualization();
-        });
-        
-        // Place button
-        placeBtn.addEventListener('click', () => {
-            placeNeuralNetwork();
-        });
-        
-        // Reset position button
-        resetPositionBtn.addEventListener('click', () => {
-            resetNetworkPosition();
         });
         
         // Handle device orientation changes
@@ -440,6 +366,81 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
     
+    // Request camera permission explicitly
+    function requestCameraPermission() {
+        if (cameraPermissionRequested) {
+            console.log('Camera permission already requested');
+            return;
+        }
+        
+        console.log('Requesting camera permission via button click');
+        cameraPermissionRequested = true;
+        
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    console.log('Camera permission granted via button click!');
+                    // Stop the stream immediately, AR.js will request it again
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    // Update UI to show success
+                    if (cameraAccessBtn) {
+                        cameraAccessBtn.textContent = 'Camera Access Granted';
+                        cameraAccessBtn.style.backgroundColor = '#34a853';
+                        cameraAccessBtn.disabled = true;
+                    }
+                    
+                    // Reload the AR scene to ensure it uses the new permission
+                    const arScene = document.querySelector('a-scene');
+                    if (arScene) {
+                        console.log('Reloading AR scene with new camera permission');
+                        arScene.reload();
+                    } else {
+                        console.log('AR scene not found, continuing with normal initialization');
+                        // If AR scene isn't found, just continue with normal initialization
+                        initializeNeuralNetwork();
+                        initializeARVisualization();
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Camera permission denied or error occurred via button click:', error);
+                    // Update UI to show error
+                    if (cameraAccessBtn) {
+                        cameraAccessBtn.textContent = 'Camera Access Denied';
+                        cameraAccessBtn.style.backgroundColor = '#ea4335';
+                    }
+                    
+                    // Show error message
+                    loadingScreen.innerHTML = `
+                        <div class="loading-content">
+                            <h1>Camera Access Required</h1>
+                            <p>This AR experience requires camera access, which was denied or encountered an error.</p>
+                            <p>Please refresh the page and allow camera access when prompted.</p>
+                            <p>Error: ${error.message || 'Permission denied'}</p>
+                            <button onclick="location.reload()">Refresh Page</button>
+                        </div>
+                    `;
+                });
+        } else {
+            console.error('MediaDevices API not available');
+            // Update UI to show error
+            if (cameraAccessBtn) {
+                cameraAccessBtn.textContent = 'Camera API Not Available';
+                cameraAccessBtn.style.backgroundColor = '#ea4335';
+            }
+            
+            // Show error message
+            loadingScreen.innerHTML = `
+                <div class="loading-content">
+                    <h1>Device Not Compatible</h1>
+                    <p>Your device does not support the camera API required for this AR experience.</p>
+                    <p>Please try using a different device or browser.</p>
+                    <button onclick="location.reload()">Refresh Page</button>
+                </div>
+            `;
+        }
+    }
+    
     // Initialize application
     function initializeApp() {
         console.log('Starting application initialization');
@@ -449,21 +450,62 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // Initialize components
-        initializeNeuralNetwork();
-        initializeARVisualization();
-        
-        // Set up event listeners
-        setupEventListeners();
-        
-        // Handle errors
-        handleErrors();
-        
-        // Add a slight delay to ensure proper canvas sizing
-        setTimeout(ensureProperCanvasSizing, 1000);
-        
-        // Fix AR.js camera feed
-        fixARJSCameraFeed();
+        // Explicitly request camera permission before initializing AR
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            console.log('Explicitly requesting camera permission...');
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    console.log('Camera permission granted!');
+                    cameraPermissionRequested = true;
+                    
+                    // Update UI to show success
+                    if (cameraAccessBtn) {
+                        cameraAccessBtn.textContent = 'Camera Access Granted';
+                        cameraAccessBtn.style.backgroundColor = '#34a853';
+                        cameraAccessBtn.disabled = true;
+                    }
+                    
+                    // Stop the stream immediately, AR.js will request it again
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    // Now initialize components
+                    initializeNeuralNetwork();
+                    initializeARVisualization();
+                    
+                    // Set up event listeners
+                    setupEventListeners();
+                    
+                    // Handle errors
+                    handleErrors();
+                    
+                    // Add a slight delay to ensure proper canvas sizing
+                    setTimeout(ensureProperCanvasSizing, 1000);
+                    
+                    // Fix AR.js camera feed
+                    fixARJSCameraFeed();
+                })
+                .catch(function(error) {
+                    console.error('Camera permission denied or error occurred:', error);
+                    // Show error message to user
+                    loadingScreen.innerHTML = `
+                        <div class="loading-content">
+                            <h1>Camera Access Required</h1>
+                            <p>This AR experience requires camera access, which was denied or encountered an error.</p>
+                            <p>Please refresh the page and allow camera access when prompted.</p>
+                            <p>Error: ${error.message || 'Permission denied'}</p>
+                        </div>
+                    `;
+                });
+        } else {
+            // Initialize components without explicit permission (fallback)
+            console.log('MediaDevices API not available, proceeding without explicit permission request');
+            initializeNeuralNetwork();
+            initializeARVisualization();
+            setupEventListeners();
+            handleErrors();
+            setTimeout(ensureProperCanvasSizing, 1000);
+            fixARJSCameraFeed();
+        }
         
         console.log('Application initialization complete');
     }
