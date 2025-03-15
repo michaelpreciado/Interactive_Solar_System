@@ -13,7 +13,12 @@
     <div id="ui-container" class="fullscreen">
         <div id="start-screen" class="centered-content">
             <h1>Neural Network AR</h1>
-            <button id="start-button" class="primary-button">Start Experience</button>
+            <p class="compatibility-notice">
+                For best experience, use Safari on an iPhone 6s or newer with iOS 11+.<br>
+                WebXR features must be enabled in Safari settings.
+            </p>
+            <button id="start-button" class="primary-button">Start AR Experience</button>
+            <button id="fallback-button" class="secondary-button" style="position: relative; margin-top: 20px;">View 3D Model (Non-AR)</button>
         </div>
         
         <div id="ar-overlay" class="hidden">
@@ -30,20 +35,28 @@
                 <button id="permission-button" class="primary-button">Allow Camera</button>
             </div>
         </div>
+        
+        <!-- Fallback container for non-AR devices -->
+        <div id="fallback-container" class="fullscreen hidden">
+            <div class="info-message" style="top: 20px;">
+                <p>Non-AR 3D View Mode</p>
+            </div>
+            <button id="fallback-back-button" class="secondary-button">Back</button>
+        </div>
     </div>
     
     <!-- AR and rendering containers -->
     <div id="ar-container" class="fullscreen hidden"></div>
     
-    <!-- Loading Three.js and AR libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Loading Three.js and AR libraries with updated CDN links -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/controls/OrbitControls.js"></script>
     
     <!-- Application scripts -->
     <script src="public/js/neural-network.js"></script>
     <script src="public/js/ar-manager.js"></script>
+    <script src="public/js/fallback-view.js"></script>
     <script src="public/js/main.js"></script>
 </body>
 </html> 
