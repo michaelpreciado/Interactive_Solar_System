@@ -1,84 +1,67 @@
-# Neural Network AR Visualizer
+# Interactive Neural Network AR Experience
 
-An augmented reality application that visualizes neural networks in action during inference. This mobile-first web application uses your device's camera to display a live visualization of a neural network processing data.
+A web-based augmented reality visualization of a neural network optimized for iPhone devices. This project uses Three.js for 3D rendering and integrates with Apple ARKit through WebXR APIs.
+
+## Overview
+
+This application allows users to experience a holographic visualization of a neural network in augmented reality. The neural network appears as a 3D object that can be placed on real-world surfaces, with animated nodes and connections simulating neural activity.
 
 ## Features
 
-- Real-time neural network visualization in AR
-- Mobile-first design
-- Interactive elements to understand neural network operations
-- Animated visualization of data flowing through the network
+- **Minimalist UI**: Clean, iOS-style interface with ample white space and intuitive controls
+- **AR Integration**: Uses WebXR API with ARKit compatibility for high-performance AR
+- **Surface Detection**: Automatically detects flat surfaces for neural network placement
+- **Holographic Visualization**: Semi-transparent, glowing nodes and connections
+- **Dynamic Animations**: 
+  - Pulsating nodes with glowing effects
+  - Signal propagation animations between connected nodes
+  - Gentle rotation for enhanced 3D effect
+- **Basketball-sized Network**: Scaled to approximately the size of a basketball for easy viewing
 
-## Technologies Used
+## Technical Implementation
 
-- HTML5, CSS3, JavaScript
-- Three.js for 3D rendering
-- AR.js for augmented reality capabilities
-- TensorFlow.js for neural network implementation
+- **Frontend**: HTML5, CSS3, JavaScript
+- **3D Rendering**: Three.js
+- **AR Support**: WebXR API with Apple ARKit integration
+- **Performance Optimizations**: 
+  - Efficient rendering techniques for mobile devices
+  - Minimal UI to maximize performance
 
-## Setup
+## Requirements
 
-1. Clone this repository
-2. Navigate to the project directory
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Start the local development server:
-   ```bash
-   npm start
-   ```
-5. Open the application on a mobile device by navigating to your computer's IP address on port 8080 (e.g., http://192.168.1.100:8080)
+- iPhone with ARKit support (iPhone 6s or newer)
+- iOS 11 or later
+- Safari browser
 
 ## Usage
 
-1. Open the application on a mobile device
-2. Allow camera permissions when prompted
-3. Open the Hiro marker on another device or print it out
-   - You can use the included `hiro-marker.html` file
-   - Or visit: https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png
-4. Point your camera at the Hiro marker
-5. Watch the neural network visualization appear and animate
+1. Open the application URL in Safari on an ARKit-compatible iPhone
+2. Tap "Start Experience" and grant camera access
+3. Move your device to detect a flat surface
+4. Once a surface is detected, the neural network will automatically appear
+5. Observe the neural network animation and dynamic signal flows
 
-## Troubleshooting
+## Structure
 
-If you encounter issues with the AR experience:
-
-1. **Camera Access**: Make sure you've granted camera permissions to the browser
-2. **Lighting**: Ensure good lighting conditions for marker detection
-3. **Marker Visibility**: Keep the entire Hiro marker visible in the camera view
-4. **Browser Compatibility**: Use a modern browser that supports WebGL and WebRTC (Chrome, Safari, Firefox)
-5. **Console Errors**: Check the browser console for specific error messages
-6. **Restart**: Try refreshing the page or restarting the application
-
-### Common Issues:
-
-- **Stuck on Loading Screen**: If the application is stuck on the loading screen, try:
-  - Refreshing the page
-  - Using the debug.html page to test if AR.js is working correctly
-  - Ensuring you have a stable internet connection
-  - Trying a different browser (Safari on iOS often works best)
-
-- **Marker Not Detected**: If the Hiro marker is not being detected:
-  - Make sure the marker is well-lit and not reflective
-  - Keep the marker flat and fully visible in the camera view
-  - Try increasing the size of the marker
-  - Use the hiro-marker.html file on another device for optimal results
-
-- **Performance Issues**: If the application is slow or laggy:
-  - Close other applications and tabs
-  - Ensure your device has sufficient memory
-  - Try a device with better specifications if possible
+- `index.html` - Main entry point
+- `public/css/styles.css` - Styling for the UI
+- `public/js/main.js` - Main application controller
+- `public/js/ar-manager.js` - AR initialization and handling
+- `public/js/neural-network.js` - Neural network visualization and animation
 
 ## Development
 
-```bash
-# Install dependencies
-npm install
+To run the project locally:
 
-# Start local development server
-npm start
-```
+1. Clone the repository
+2. Set up a local server (due to security constraints, AR must be accessed via HTTPS or localhost)
+3. Access the application through an iPhone's Safari browser
+
+## Limitations
+
+- WebXR AR support is limited to Safari on iOS devices
+- Performance may vary based on device capabilities
+- Lighting conditions can affect surface detection quality
 
 ## License
 
