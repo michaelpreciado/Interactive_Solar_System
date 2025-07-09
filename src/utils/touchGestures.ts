@@ -172,7 +172,7 @@ export const usePerformanceMonitor = () => {
 // Device capability detection
 export const detectDeviceCapabilities = () => {
   const canvas = document.createElement('canvas')
-  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+  const gl = (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null
   
   const capabilities = {
     hasWebGL: !!gl,
@@ -189,8 +189,8 @@ export const detectDeviceCapabilities = () => {
     const fragmentShaderPrecision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT)
     const vertexShaderPrecision = gl.getShaderPrecisionFormat(gl.VERTEX_SHADER, gl.HIGH_FLOAT)
     
-    capabilities.hasHighPrecisionFragmentShader = fragmentShaderPrecision?.precision > 0
-    capabilities.hasHighPrecisionVertexShader = vertexShaderPrecision?.precision > 0
+    capabilities.hasHighPrecisionFragmentShader = fragmentShaderPrecision ? fragmentShaderPrecision.precision > 0 : false
+    capabilities.hasHighPrecisionVertexShader = vertexShaderPrecision ? vertexShaderPrecision.precision > 0 : false
   }
 
   // Heuristic for low-end device detection
