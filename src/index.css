@@ -1,0 +1,605 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══ LIQUID GLASS UI SYSTEM ═══ */
+
+:root {
+  /* Core Glass Variables */
+  --lg-tint-base: hsl(200 60% 52% / 0.35);
+  --lg-accent: hsl(200 100% 60%);
+  --lg-blur: 24px;
+  
+  /* Glass Material Properties */
+  --lg-glass-primary: hsla(200, 60%, 52%, 0.12);
+  --lg-glass-secondary: hsla(240, 60%, 52%, 0.10);
+  --lg-glass-success: hsla(120, 60%, 52%, 0.12);
+  --lg-glass-warning: hsla(45, 60%, 52%, 0.12);
+  --lg-glass-danger: hsla(0, 60%, 52%, 0.12);
+  
+  /* Border & Stroke */
+  --lg-border-primary: hsla(200, 100%, 80%, 0.25);
+  --lg-border-secondary: hsla(240, 100%, 80%, 0.20);
+  --lg-border-subtle: hsla(0, 0%, 100%, 0.15);
+  
+  /* Shadows & Depth */
+  --lg-shadow-soft: 0 2px 16px hsla(200, 60%, 20%, 0.20);
+  --lg-shadow-medium: 0 4px 24px hsla(200, 60%, 20%, 0.25);
+  --lg-shadow-deep: 0 8px 32px hsla(200, 60%, 20%, 0.30);
+  --lg-shadow-inner: inset 0 1px 2px hsla(0, 0%, 100%, 0.15);
+  
+  /* Refraction & Highlights */
+  --lg-highlight-primary: hsla(200, 100%, 95%, 0.25);
+  --lg-highlight-secondary: hsla(240, 100%, 95%, 0.20);
+  --lg-refract-edge: linear-gradient(135deg, hsla(0, 0%, 100%, 0.20) 0%, transparent 50%, hsla(0, 0%, 100%, 0.10) 100%);
+  
+  /* Typography on Glass */
+  --lg-text-primary: hsla(0, 0%, 100%, 0.95);
+  --lg-text-secondary: hsla(0, 0%, 100%, 0.75);
+  --lg-text-tertiary: hsla(0, 0%, 100%, 0.55);
+  
+  /* Animation Properties */
+  --lg-transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --lg-transition-smooth: 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --lg-transition-bounce: 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Dark Mode Optimizations */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --lg-glass-primary: hsla(200, 60%, 52%, 0.15);
+    --lg-glass-secondary: hsla(240, 60%, 52%, 0.12);
+    --lg-border-primary: hsla(200, 100%, 80%, 0.30);
+    --lg-shadow-soft: 0 2px 16px hsla(200, 60%, 10%, 0.40);
+    --lg-shadow-medium: 0 4px 24px hsla(200, 60%, 10%, 0.45);
+    --lg-shadow-deep: 0 8px 32px hsla(200, 60%, 10%, 0.50);
+  }
+}
+
+/* Performance Optimizations */
+@media (max-width: 768px) {
+  :root {
+    --lg-blur: 16px;
+    --lg-transition-fast: 0.1s ease-out;
+    --lg-transition-smooth: 0.2s ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --lg-transition-fast: 0.01s;
+    --lg-transition-smooth: 0.01s;
+    --lg-transition-bounce: 0.01s;
+  }
+}
+
+/* ═══ BASE GLASS FOUNDATION ═══ */
+
+.lg-glass {
+  position: relative;
+  background: var(--lg-glass-primary);
+  backdrop-filter: blur(var(--lg-blur));
+  -webkit-backdrop-filter: blur(var(--lg-blur));
+  border: 1px solid var(--lg-border-subtle);
+  border-radius: 16px;
+  box-shadow: var(--lg-shadow-soft), var(--lg-shadow-inner);
+  
+  /* Performance Hints */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: layout style paint;
+}
+
+.lg-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--lg-refract-edge);
+  border-radius: inherit;
+  opacity: 0.6;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.lg-glass::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--lg-highlight-primary);
+  border-radius: 16px 16px 0 0;
+  pointer-events: none;
+}
+
+/* ═══ GLASS VARIANTS ═══ */
+
+.lg-glass-primary {
+  background: var(--lg-glass-primary);
+  border-color: var(--lg-border-primary);
+  color: var(--lg-text-primary);
+}
+
+.lg-glass-secondary {
+  background: var(--lg-glass-secondary);
+  border-color: var(--lg-border-secondary);
+  color: var(--lg-text-primary);
+}
+
+.lg-glass-success {
+  background: var(--lg-glass-success);
+  border-color: hsla(120, 60%, 60%, 0.30);
+}
+
+.lg-glass-warning {
+  background: var(--lg-glass-warning);
+  border-color: hsla(45, 60%, 60%, 0.30);
+}
+
+.lg-glass-danger {
+  background: var(--lg-glass-danger);
+  border-color: hsla(0, 60%, 60%, 0.30);
+}
+
+/* ═══ INTERACTIVE GLASS COMPONENTS ═══ */
+
+.lg-button {
+  @apply lg-glass;
+  padding: 12px 20px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--lg-transition-smooth);
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--lg-text-primary);
+}
+
+.lg-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--lg-shadow-medium), var(--lg-shadow-inner);
+  background: var(--lg-glass-primary);
+  border-color: var(--lg-border-primary);
+}
+
+.lg-button:active {
+  transform: translateY(0px) scale(0.98);
+  transition: all var(--lg-transition-fast);
+}
+
+.lg-button-compact {
+  @apply lg-button;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 10px;
+  min-height: 32px;
+}
+
+.lg-button-primary {
+  background: var(--lg-glass-primary);
+  border-color: var(--lg-border-primary);
+  box-shadow: var(--lg-shadow-soft), var(--lg-shadow-inner), 0 0 0 1px var(--lg-accent) inset;
+}
+
+.lg-button-success {
+  background: var(--lg-glass-success);
+  border-color: hsla(120, 60%, 60%, 0.30);
+}
+
+/* ═══ PANEL COMPONENTS ═══ */
+
+.lg-panel {
+  @apply lg-glass;
+  padding: 24px;
+  border-radius: 20px;
+  box-shadow: var(--lg-shadow-medium), var(--lg-shadow-inner);
+  backdrop-filter: blur(var(--lg-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(180%);
+}
+
+.lg-panel-compact {
+  @apply lg-panel;
+  padding: 16px;
+  border-radius: 16px;
+  backdrop-filter: blur(var(--lg-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(150%);
+}
+
+/* ═══ SPECIALIZED CONTROLS ═══ */
+
+.lg-play {
+  @apply lg-button;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--lg-glass-primary);
+  border-color: var(--lg-border-primary);
+  box-shadow: var(--lg-shadow-medium), var(--lg-shadow-inner);
+}
+
+.lg-play-compact {
+  @apply lg-play;
+  width: 36px;
+  height: 36px;
+}
+
+.lg-close {
+  @apply lg-button;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  padding: 0;
+  background: var(--lg-glass-danger);
+  border-color: hsla(0, 60%, 60%, 0.30);
+}
+
+.lg-close-compact {
+  @apply lg-close;
+  width: 24px;
+  height: 24px;
+}
+
+/* ═══ FORM CONTROLS ═══ */
+
+.lg-slider {
+  position: relative;
+  width: 100%;
+  padding: 8px 0;
+}
+
+.lg-slider input[type="range"] {
+  width: 100%;
+  height: 6px;
+  background: var(--lg-glass-secondary);
+  border-radius: 3px;
+  border: 1px solid var(--lg-border-subtle);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.lg-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--lg-glass-primary);
+  border: 2px solid var(--lg-border-primary);
+  cursor: pointer;
+  box-shadow: var(--lg-shadow-soft), var(--lg-shadow-inner);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all var(--lg-transition-smooth);
+}
+
+.lg-slider input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--lg-glass-primary);
+  border: 2px solid var(--lg-border-primary);
+  cursor: pointer;
+  box-shadow: var(--lg-shadow-soft), var(--lg-shadow-inner);
+}
+
+.lg-slider-compact {
+  @apply lg-slider;
+  padding: 4px 0;
+}
+
+.lg-slider-compact input[type="range"] {
+  height: 4px;
+}
+
+.lg-slider-compact input[type="range"]::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+}
+
+.lg-slider-compact input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+}
+
+/* ═══ TOGGLE STATES ═══ */
+
+.lg-toggle-active {
+  background: var(--lg-glass-success) !important;
+  border-color: hsla(120, 60%, 60%, 0.40) !important;
+  box-shadow: var(--lg-shadow-medium), var(--lg-shadow-inner), 0 0 0 1px hsla(120, 60%, 60%, 0.30) inset !important;
+}
+
+/* ═══ RIPPLE EFFECT ═══ */
+
+.lg-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.lg-ripple::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: var(--lg-highlight-primary);
+  transform: translate(-50%, -50%);
+  transition: width var(--lg-transition-fast), height var(--lg-transition-fast);
+  pointer-events: none;
+}
+
+.lg-ripple:active::before {
+  width: 300px;
+  height: 300px;
+  opacity: 0.3;
+  transition: width var(--lg-transition-bounce), height var(--lg-transition-bounce), opacity var(--lg-transition-fast);
+}
+
+/* ═══ MOBILE OPTIMIZATIONS ═══ */
+
+@media (max-width: 768px) {
+  .lg-glass {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  
+  .lg-button {
+    min-height: 44px; /* iOS touch target */
+    padding: 12px 16px;
+  }
+  
+  .lg-button-compact {
+    min-height: 36px;
+    padding: 8px 12px;
+  }
+}
+
+/* ═══ ACCESSIBILITY FEATURES ═══ */
+
+@media (prefers-contrast: high) {
+  :root {
+    --lg-border-primary: hsla(200, 100%, 80%, 0.60);
+    --lg-border-subtle: hsla(0, 0%, 100%, 0.40);
+    --lg-text-primary: hsla(0, 0%, 100%, 1);
+    --lg-text-secondary: hsla(0, 0%, 100%, 0.90);
+  }
+  
+  .lg-glass {
+    background: hsla(200, 60%, 52%, 0.25);
+    border-width: 2px;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .lg-button:hover {
+    transform: none;
+  }
+  
+  .lg-button:active {
+    transform: scale(0.95);
+    background: var(--lg-glass-secondary);
+  }
+}
+
+/* ═══ UTILITY CLASSES ═══ */
+
+.lg-text-primary { color: var(--lg-text-primary); }
+.lg-text-secondary { color: var(--lg-text-secondary); }
+.lg-text-tertiary { color: var(--lg-text-tertiary); }
+
+.lg-shadow-soft { box-shadow: var(--lg-shadow-soft); }
+.lg-shadow-medium { box-shadow: var(--lg-shadow-medium); }
+.lg-shadow-deep { box-shadow: var(--lg-shadow-deep); }
+
+/* ═══ BASE STYLES ═══ */
+
+html {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+  color: white;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: pixelated;
+  touch-action: manipulation;
+}
+
+/* ═══ SCROLLBAR STYLING ═══ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--lg-glass-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--lg-glass-primary);
+  border-radius: 4px;
+  border: 1px solid var(--lg-border-subtle);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--lg-border-primary);
+}
+
+/* ═══ FOCUS STYLES ═══ */
+
+button:focus,
+input:focus,
+[tabindex]:focus {
+  outline: 2px solid var(--lg-accent);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+/* ═══ ANIMATIONS ═══ */
+
+@keyframes lg-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lg-slide-in {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes lg-scale-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-lg-fade-in { animation: lg-fade-in 0.3s ease-out; }
+.animate-lg-slide-in { animation: lg-slide-in 0.3s ease-out; }
+.animate-lg-scale-in { animation: lg-scale-in 0.2s ease-out; }
+
+/* ═══ LEGACY COMPATIBILITY ═══ */
+
+/* Map old classes to new liquid glass system */
+.liquid-glass-panel { @apply lg-panel; }
+.liquid-glass-panel-compact { @apply lg-panel-compact; }
+.liquid-glass-button { @apply lg-button; }
+.liquid-glass-button-compact { @apply lg-button-compact; }
+.liquid-glass-button-primary { @apply lg-button-primary; }
+.liquid-glass-button-success { @apply lg-button-success; }
+.liquid-glass-play { @apply lg-play; }
+.liquid-glass-play-compact { @apply lg-play-compact; }
+.liquid-glass-close { @apply lg-close; }
+.liquid-glass-close-compact { @apply lg-close-compact; }
+.liquid-glass-slider { @apply lg-slider; }
+.liquid-glass-slider-compact { @apply lg-slider-compact; }
+.liquid-glass-ripple { @apply lg-ripple; }
+.liquid-glass-toggle-active { @apply lg-toggle-active; }
+
+/* Performance optimizations */
+.hardware-accelerated {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.contain-paint { contain: paint; }
+.contain-layout { contain: layout; }
+.contain-style { contain: style; }
+.contain-all { contain: layout style paint; }
+
+/* Educational features support */
+.educational-focus:focus {
+  outline: 3px solid var(--lg-accent);
+  outline-offset: 3px;
+}
+
+.educational-high-contrast {
+  filter: contrast(1.5) brightness(1.2);
+}
+
+@keyframes fact-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes quiz-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes lesson-progress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: var(--progress-width, 100%);
+  }
+}
+
+.animate-fact-appear {
+  animation: fact-appear 0.5s ease-out;
+}
+
+.animate-quiz-pulse {
+  animation: quiz-pulse 2s ease-in-out infinite;
+}
+
+.animate-lesson-progress {
+  animation: lesson-progress 1s ease-out;
+}
+
+@media (max-width: 768px) {
+  .educational-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+@media print {
+  .educational-no-print {
+    display: none !important;
+  }
+  
+  .lg-panel {
+    background: white !important;
+    color: black !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  
+  .lg-button {
+    background: #f0f0f0 !important;
+    color: black !important;
+    border: 1px solid #ccc !important;
+  }
+}

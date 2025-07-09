@@ -1,0 +1,46 @@
+{
+  "name": "Educational Solar System Explorer",
+  "short_name": "Solar System",
+  "description": "Comprehensive educational solar system with interactive lessons, quizzes, and tools for students and teachers",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1B2735",
+  "theme_color": "#1B2735",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "science", "reference"],
+  "keywords": ["solar system", "planets", "astronomy", "education", "science", "learning", "interactive", "3D", "space"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "educational_metadata": {
+    "subject": "Astronomy and Space Science",
+    "grade_levels": ["K-2", "3-5", "6-8", "9-12", "Higher Education"],
+    "standards": ["NGSS", "Common Core Math", "NASA Education"],
+    "learning_objectives": [
+      "Identify and describe the eight planets in our solar system",
+      "Understand planetary characteristics and orbital mechanics",
+      "Compare and contrast different planets and their properties",
+      "Explore the scale and structure of the solar system",
+      "Develop scientific inquiry and observation skills"
+    ],
+    "features": [
+      "Interactive 3D visualization",
+      "Age-appropriate content levels",
+      "Guided lessons and tours",
+      "Assessment tools and quizzes",
+      "Planet comparison tools",
+      "Teacher dashboard and resources",
+      "Curriculum alignment",
+      "Accessibility support"
+    ]
+  }
+} 

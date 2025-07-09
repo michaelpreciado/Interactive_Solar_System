@@ -1,29 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Interactive 3D Solar System</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        /* Minimal reset */
-        body, html { margin: 0; padding: 0; overflow: hidden; }
-        canvas { display: block; }
-    </style>
+  <meta charset="UTF-8">
+  
+  <!-- Mobile optimizations -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Solar System">
+  <meta name="theme-color" content="#1B2735">
+  <meta name="msapplication-navbutton-color" content="#1B2735">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <!-- Performance optimizations -->
+  <meta name="format-detection" content="telephone=no">
+  <meta name="format-detection" content="address=no">
+  <meta name="format-detection" content="email=no">
+  <meta name="msapplication-tap-highlight" content="no">
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="/src/index.css" as="style">
+  <link rel="preload" href="/src/main.tsx" as="script">
+  
+  <!-- DNS prefetch for external resources -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com">
+  <link rel="dns-prefetch" href="//fonts.gstatic.com">
+  
+  <!-- Favicon and app icons -->
+  <link rel="icon" type="image/svg+xml" href="/vite.svg">
+  <link rel="apple-touch-icon" href="/vite.svg">
+  
+  <!-- App manifest for PWA -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Page title and description -->
+  <title>Interactive Solar System - Explore the Universe</title>
+  <meta name="description" content="Explore our solar system with accurate planetary positions, realistic distances, and beautiful 3D visualization. Optimized for mobile devices.">
+  
+  <!-- OpenGraph tags for social sharing -->
+  <meta property="og:title" content="Interactive Solar System">
+  <meta property="og:description" content="Explore our solar system with accurate planetary positions and realistic distances">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://solar-system.example.com">
+  <meta property="og:image" content="/og-image.jpg">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Interactive Solar System">
+  <meta name="twitter:description" content="Explore our solar system with accurate planetary positions and realistic distances">
+  <meta name="twitter:image" content="/og-image.jpg">
+  
+  <!-- Critical CSS for performance -->
+  <style>
+    /* Liquid Glass Variables */
+    :root {
+      --lg-accent: hsl(200 100% 60%);
+      --lg-glass-loading: hsla(200, 60%, 52%, 0.15);
+      --lg-border-loading: hsla(200, 100%, 80%, 0.30);
+    }
+    
+    /* Critical above-the-fold styles */
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+      color: white;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow-x: hidden;
+    }
+    
+    #root {
+      width: 100%;
+      height: 100vh;
+      position: relative;
+    }
+    
+    /* Liquid Glass Loading Spinner */
+    .loading-spinner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      background: var(--lg-glass-loading);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 2px solid var(--lg-border-loading);
+      border-top: 2px solid var(--lg-accent);
+      border-radius: 50%;
+      animation: lg-spin 1s linear infinite;
+      box-shadow: 0 4px 24px hsla(200, 60%, 20%, 0.25);
+    }
+    
+    @keyframes lg-spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    
+    /* Prevent layout shift */
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Mobile touch optimization */
+    @media (hover: none) and (pointer: coarse) {
+      * {
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      button, a {
+        touch-action: manipulation;
+      }
+    }
+    
+    /* Reduce motion for accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    /* High contrast mode */
+    @media (prefers-contrast: high) {
+      body {
+        background: #000;
+        color: #fff;
+      }
+      .loading-spinner {
+        background: hsla(200, 60%, 52%, 0.40);
+        border-color: hsla(200, 100%, 80%, 0.60);
+        border-top-color: var(--lg-accent);
+      }
+    }
+  </style>
 </head>
 <body>
-    <canvas id="solar-system-canvas"></canvas>
-
-    <!-- Three.js Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- OrbitControls for interaction -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <!-- Post-processing -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script> <!-- Dependency for Bloom -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script> <!-- Dependency for Bloom -->
-
-    <script src="script.js"></script>
+  <div id="root">
+    <!-- Fallback loading indicator -->
+    <div class="loading-spinner"></div>
+  </div>
+  
+  <!-- Service Worker registration for PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('SW registered: ', registration);
+          })
+          .catch(registrationError => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+  </script>
+  
+  <!-- Performance monitoring script -->
+  <script>
+    // Monitor performance metrics
+    if ('performance' in window) {
+      window.addEventListener('load', () => {
+        // Log performance metrics
+        const perfData = performance.getEntriesByType('navigation')[0];
+        if (perfData) {
+          console.log('Page Load Time:', perfData.loadEventEnd - perfData.loadEventStart);
+          console.log('DOM Content Loaded:', perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart);
+        }
+        
+        // Monitor FPS
+        let lastTime = performance.now();
+        let frameCount = 0;
+        
+        function measureFPS() {
+          const currentTime = performance.now();
+          frameCount++;
+          
+          if (currentTime - lastTime >= 1000) {
+            const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+            if (fps < 30) {
+              console.warn('Low FPS detected:', fps);
+            }
+            frameCount = 0;
+            lastTime = currentTime;
+          }
+          
+          requestAnimationFrame(measureFPS);
+        }
+        
+        requestAnimationFrame(measureFPS);
+      });
+    }
+  </script>
+  
+  <!-- Main application script -->
+  <script type="module" src="/src/main.tsx"></script>
 </body>
+</html>
