@@ -2,6 +2,7 @@ import React, { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Mesh, MeshBasicMaterial, MeshStandardMaterial, Color } from 'three'
 import { Html } from '@react-three/drei'
+import { SimpleSunMaterial, SimpleCoronaMaterial } from './SimpleSunMaterial'
 
 interface SunProps {
   showLabel: boolean
@@ -16,25 +17,8 @@ export const Sun: React.FC<SunProps> = ({ showLabel }) => {
   const sunRadius = 2.5
   const geometryDetail = 64 // High resolution for close-up viewing
   
-  // Enhanced sun material with surface variations
-  const sunMaterial = useMemo(() => {
-    return new MeshStandardMaterial({
-      color: new Color('#FFA500'),
-      emissive: new Color('#FF4500'),
-      emissiveIntensity: 0.8,
-    })
-  }, [])
-  
-  // Corona material
-  const coronaMaterial = useMemo(() => {
-    return new MeshStandardMaterial({
-      color: new Color('#FFD700'),
-      emissive: new Color('#FFA500'),
-      emissiveIntensity: 0.3,
-      transparent: true,
-      opacity: 0.1,
-    })
-  }, [])
+  // Enhanced sun material is now handled by SunMaterial component
+  // Corona material is now handled by CoronaMaterial component
   
   // Solar flare materials
   const flareMaterial1 = useMemo(() => {
@@ -143,8 +127,9 @@ export const Sun: React.FC<SunProps> = ({ showLabel }) => {
   return (
     <group>
       {/* Main sun body */}
-      <mesh ref={sunRef} material={sunMaterial}>
+      <mesh ref={sunRef}>
         <sphereGeometry args={[sunRadius, geometryDetail, geometryDetail]} />
+        <SimpleSunMaterial intensity={2.5} />
       </mesh>
       
       {/* Sunspots */}
@@ -161,15 +146,18 @@ export const Sun: React.FC<SunProps> = ({ showLabel }) => {
         <sphereGeometry args={[sunRadius * 0.25, 16, 16]} />
       </mesh>
       
-      {/* Corona layers */}
-      <mesh ref={coronaRef} material={coronaMaterial}>
-        <sphereGeometry args={[sunRadius * 1.2, geometryDetail, geometryDetail]} />
+      {/* Enhanced corona layers with WebGL materials */}
+      <mesh ref={coronaRef}>
+        <sphereGeometry args={[sunRadius * 1.3, geometryDetail, geometryDetail]} />
+        <SimpleCoronaMaterial coronaColor="#FF6B35" intensity={0.6} />
       </mesh>
-      <mesh material={coronaMaterial}>
-        <sphereGeometry args={[sunRadius * 1.5, geometryDetail, geometryDetail]} />
+      <mesh>
+        <sphereGeometry args={[sunRadius * 1.6, geometryDetail, geometryDetail]} />
+        <SimpleCoronaMaterial coronaColor="#FF8C42" intensity={0.4} />
       </mesh>
-      <mesh material={coronaMaterial}>
-        <sphereGeometry args={[sunRadius * 1.8, geometryDetail, geometryDetail]} />
+      <mesh>
+        <sphereGeometry args={[sunRadius * 2.0, geometryDetail, geometryDetail]} />
+        <SimpleCoronaMaterial coronaColor="#FFB347" intensity={0.2} />
       </mesh>
       
       {/* Intense inner glow */}

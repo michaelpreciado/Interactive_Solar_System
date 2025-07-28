@@ -6,6 +6,7 @@ import { useTimeStore } from '../stores/useTimeStore'
 import { useUIStore } from '../stores/useUIStore'
 import { PlanetData } from '../utils/planetaryCalculations'
 import { Moon } from './Moon'
+import { EnhancedPlanetMaterial, SimpleAtmosphereMaterial } from './EnhancedPlanetMaterial'
 
 interface PlanetProps {
   planet: PlanetData
@@ -26,51 +27,38 @@ const PlanetComponent: React.FC<PlanetProps> = ({ planet, index, showLabel }) =>
     return performanceSettings.planetGeometryDetail
   }, [performanceSettings.planetGeometryDetail])
 
-  // Memoize planet materials with performance optimizations
-  const planetMaterial = useMemo(() => {
-    const baseColor = new Color(planet.color)
-    const emissiveColor = baseColor.clone().multiplyScalar(0.1)
-    
-    return {
-      color: planet.color,
-      emissive: emissiveColor,
-      emissiveIntensity: isSelected ? 0.3 : 0.1,
-      roughness: 0.8,
-      metalness: 0.1,
-      transparent: true,
-      opacity: 1.0,
-    }
-  }, [planet.color, isSelected])
+  // Determine if planet has atmosphere
+  const hasAtmosphere = useMemo(() => {
+    return ['Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'].includes(planet.name)
+  }, [planet.name])
 
-  // Memoize gas giant materials
-  const gasGiantMaterial = useMemo(() => {
-    if (planet.name === 'Jupiter' || planet.name === 'Saturn') {
-      return {
-        ...planetMaterial,
-        emissiveIntensity: isSelected ? 0.4 : 0.2,
-        roughness: 0.6,
-        metalness: 0.0,
-      }
+  // Planet-specific atmosphere colors
+  const atmosphereColor = useMemo(() => {
+    switch (planet.name) {
+      case 'Venus': return '#FFC649'
+      case 'Earth': return '#87CEEB'
+      case 'Mars': return '#CD5C5C'
+      case 'Jupiter': return '#D2691E'
+      case 'Saturn': return '#FAD5A5'
+      case 'Uranus': return '#4FD0E7'
+      case 'Neptune': return '#4169E1'
+      default: return '#87CEEB'
     }
-    return planetMaterial
-  }, [planetMaterial, planet.name, isSelected])
+  }, [planet.name])
 
-  // Optimize atmospheric effects for mobile
+  // Enhanced atmospheric effects with WebGL shaders
   const atmosphericEffects = useMemo(() => {
-    if (!performanceSettings.enableAtmosphere) return null
+    if (!performanceSettings.enableAtmosphere || !hasAtmosphere) return null
     
     return (
       <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[planet.radius * 1.2, geometryDetail / 2, geometryDetail / 2]} />
-        <meshBasicMaterial 
-          color={planet.color} 
-          opacity={isSelected ? 0.15 : 0.08} 
-          transparent 
-          side={2}
+        <sphereGeometry args={[planet.radius * 1.3, geometryDetail, geometryDetail]} />
+        <SimpleAtmosphereMaterial
+          atmosphereColor={atmosphereColor}
         />
       </mesh>
     )
-  }, [performanceSettings.enableAtmosphere, planet.color, planet.radius, geometryDetail, isSelected])
+  }, [performanceSettings.enableAtmosphere, hasAtmosphere, planet.radius, geometryDetail, atmosphereColor, planet.name])
 
   // Optimize Saturn rings for mobile
   const saturnRings = useMemo(() => {
@@ -172,7 +160,7 @@ const PlanetComponent: React.FC<PlanetProps> = ({ planet, index, showLabel }) =>
       {/* Planet atmospheric glow */}
       {atmosphericEffects}
 
-      {/* Main planet sphere */}
+      {/* Main planet sphere with enhanced WebGL material */}
       <mesh 
         ref={meshRef} 
         onClick={handleClick}
@@ -180,8 +168,12 @@ const PlanetComponent: React.FC<PlanetProps> = ({ planet, index, showLabel }) =>
         userData={{ planetName: planet.name }}
       >
         <sphereGeometry args={[planet.radius, geometryDetail, geometryDetail]} />
-        <meshStandardMaterial 
-          {...(planet.name === 'Jupiter' || planet.name === 'Saturn' ? gasGiantMaterial : planetMaterial)}
+        <EnhancedPlanetMaterial
+          planetColor={planet.color}
+          planetName={planet.name}
+          isSelected={isSelected}
+          hasAtmosphere={hasAtmosphere}
+          atmosphereColor={atmosphereColor}
         />
       </mesh>
 

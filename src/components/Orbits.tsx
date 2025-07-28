@@ -1,7 +1,9 @@
-import React, { useMemo, memo } from 'react'
+import React, { useMemo, memo, useRef } from 'react'
 import { DoubleSide } from 'three'
+import { useFrame } from '@react-three/fiber'
 import { useUIStore } from '../stores/useUIStore'
 import { PlanetData } from '../utils/planetaryCalculations'
+import { useTimeStore } from '../stores/useTimeStore'
 
 interface OrbitsProps {
   planets: PlanetData[]
@@ -75,30 +77,42 @@ const OrbitRing: React.FC<OrbitRingProps> = memo(({
   lightIndex,
   maxLights,
 }) => {
-  // Memoize orbit line material
+  const groupRef = useRef<any>(null)
+  const { currentTime } = useTimeStore()
+
+  // Subtle orbital animation
+  useFrame(() => {
+    if (groupRef.current && enableLights) {
+      // Very subtle pulsing animation
+      const pulse = Math.sin(currentTime * 0.001 + lightIndex) * 0.02 + 1
+      groupRef.current.scale.setScalar(pulse)
+    }
+  })
+
+  // Clean orbit line material
   const orbitLineMaterial = useMemo(() => {
     return {
       color: color,
-      opacity: 0.3,
+      opacity: 0.4,
       transparent: true,
       linewidth: 2,
     }
   }, [color])
 
-  // Memoize glow material
+  // Subtle glow material
   const glowMaterial = useMemo(() => {
     return {
       color: color,
-      opacity: 0.1,
+      opacity: 0.08,
       transparent: true,
       side: DoubleSide,
     }
   }, [color])
 
-  // Memoize orbital position indicators - reduce count for mobile
+  // Minimal orbital position indicators
   const positionIndicators = useMemo(() => {
     const indicators = []
-    const indicatorCount = segments >= 64 ? 4 : 2 // Reduce indicators for lower performance
+    const indicatorCount = segments >= 64 ? 2 : 1 // Minimal indicators for clean look
     
     for (let i = 0; i < indicatorCount; i++) {
       const angle = (i / indicatorCount) * Math.PI * 2
@@ -113,68 +127,58 @@ const OrbitRing: React.FC<OrbitRingProps> = memo(({
 
   return (
     <group>
-      {/* Main orbit line */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[radius - 0.02, radius + 0.02, segments, 1]} />
-        <meshBasicMaterial {...orbitLineMaterial} />
-      </mesh>
+      {/* Clean orbit visualization */}
+      <group ref={groupRef}>
+        {/* Main orbit line - clean and visible */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[radius - 0.02, radius + 0.02, segments, 1]} />
+          <meshBasicMaterial {...orbitLineMaterial} />
+        </mesh>
 
-      {/* Outer glow ring */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[radius - 0.1, radius + 0.1, Math.max(32, segments / 2), 1]} />
-        <meshBasicMaterial {...glowMaterial} />
-      </mesh>
+        {/* Subtle orbital glow */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[radius - 0.1, radius + 0.1, Math.max(32, segments / 2), 1]} />
+          <meshBasicMaterial {...glowMaterial} />
+        </mesh>
 
-      {/* Inner highlight ring */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[radius - 0.01, radius + 0.01, Math.max(32, segments / 2), 1]} />
-        <meshBasicMaterial 
-          color="#ffffff" 
-          opacity={0.15} 
-          transparent 
-          side={DoubleSide}
-        />
-      </mesh>
+        {/* Clean orbital markers */}
+        {enableLights && positionIndicators.map((indicator) => (
+          <group key={indicator.key} position={[indicator.x, indicator.y, indicator.z]}>
+            {/* Simple orbital point */}
+            <mesh>
+              <sphereGeometry args={[0.04, 8, 8]} />
+              <meshBasicMaterial 
+                color={color} 
+                opacity={0.6} 
+                transparent 
+              />
+            </mesh>
 
-      {/* Orbital position indicators - only if lights are enabled */}
-      {enableLights && positionIndicators.map((indicator) => (
-        <group key={indicator.key} position={[indicator.x, indicator.y, indicator.z]}>
-          {/* Indicator sphere */}
-          <mesh>
-            <sphereGeometry args={[0.05, 8, 8]} />
-            <meshStandardMaterial 
+            {/* Subtle point light */}
+            {lightIndex < maxLights && (
+              <pointLight
+                color={color}
+                intensity={0.2}
+                distance={2}
+                decay={2}
+              />
+            )}
+          </group>
+        ))}
+
+        {/* Minimal orbital plane for high-performance settings */}
+        {segments >= 64 && (
+          <mesh rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[radius - 0.2, radius + 0.2, 64, 1]} />
+            <meshBasicMaterial 
               color={color} 
-              opacity={0.6} 
+              opacity={0.03} 
               transparent 
-              emissive={color}
-              emissiveIntensity={0.3}
+              side={2}
             />
           </mesh>
-
-          {/* Point light - limit total number of lights */}
-          {lightIndex < maxLights && (
-            <pointLight
-              color={color}
-              intensity={0.2}
-              distance={2}
-              decay={2}
-            />
-          )}
-        </group>
-      ))}
-
-      {/* Orbital plane highlight - only for performance tier medium and above */}
-      {segments >= 64 && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[radius - 0.3, radius + 0.3, 64, 1]} />
-          <meshBasicMaterial 
-            color={color} 
-            opacity={0.03} 
-            transparent 
-            side={2}
-          />
-        </mesh>
-      )}
+        )}
+      </group>
     </group>
   )
 })

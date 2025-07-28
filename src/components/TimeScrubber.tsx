@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useCallback } from 'react'
 import { useTimeStore } from '../stores/useTimeStore'
 
 export const TimeScrubber: React.FC = () => {
@@ -36,14 +36,81 @@ export const TimeScrubber: React.FC = () => {
   }
 
   const decreaseSpeed = () => {
-    const newSpeed = Math.max(0.1, timeStore.timeSpeed - 0.1)
+    // Smart step size based on current speed
+    const stepSize = timeStore.timeSpeed >= 1000 ? 100 : timeStore.timeSpeed >= 100 ? 10 : timeStore.timeSpeed >= 10 ? 1 : 0.1
+    const newSpeed = Math.max(0.1, timeStore.timeSpeed - stepSize)
     timeStore.setTimeSpeed(newSpeed)
   }
 
   const increaseSpeed = () => {
-    const newSpeed = Math.min(100, timeStore.timeSpeed + 0.1)
+    // Smart step size based on current speed
+    const stepSize = timeStore.timeSpeed >= 1000 ? 100 : timeStore.timeSpeed >= 100 ? 10 : timeStore.timeSpeed >= 10 ? 1 : 0.1
+    const newSpeed = Math.min(10000, timeStore.timeSpeed + stepSize)
     timeStore.setTimeSpeed(newSpeed)
   }
+
+  const setSpeedPreset = (speed: number) => {
+    timeStore.setTimeSpeed(speed)
+  }
+
+  const resetSpeed = () => {
+    timeStore.setTimeSpeed(1)
+  }
+
+  // Keyboard shortcuts for speed control
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Only handle shortcuts when not typing in an input
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      return
+    }
+
+    switch (e.key) {
+      case '-':
+      case '_':
+        e.preventDefault()
+        decreaseSpeed()
+        break
+      case '+':
+      case '=':
+        e.preventDefault()
+        increaseSpeed()
+        break
+      case '0':
+        e.preventDefault()
+        resetSpeed()
+        break
+      case '1':
+        e.preventDefault()
+        setSpeedPreset(0.1)
+        break
+      case '2':
+        e.preventDefault()
+        setSpeedPreset(1)
+        break
+      case '3':
+        e.preventDefault()
+        setSpeedPreset(10)
+        break
+      case '4':
+        e.preventDefault()
+        setSpeedPreset(100)
+        break
+      case '5':
+        e.preventDefault()
+        setSpeedPreset(1000)
+        break
+      case '6':
+        e.preventDefault()
+        setSpeedPreset(10000)
+        break
+    }
+  }, [])
+
+  // Set up keyboard event listeners
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-20 liquid-glass-panel-compact border-t border-white/20 rounded-t-2xl">
@@ -93,21 +160,114 @@ export const TimeScrubber: React.FC = () => {
           </div>
         </div>
 
-        {/* Speed Control */}
-        <div className="flex items-center gap-2">
+        {/* Enhanced Speed Control */}
+        <div className="flex items-center gap-3">
+          {/* Speed Decrease Button */}
           <button
             onClick={decreaseSpeed}
-            className="liquid-glass-button-compact px-2 py-1 text-white text-xs"
+            className="liquid-glass-button-compact px-2 py-1 text-white text-xs hover:bg-white/10 transition-colors"
             aria-label="Decrease speed"
           >
             -
           </button>
-          <div className="text-white text-xs font-medium min-w-[40px] text-center">
-            {timeStore.timeSpeed.toFixed(1)}x
+          
+          {/* Speed Slider */}
+          <div className="flex flex-col items-center gap-1 min-w-[120px]">
+            <div className="flex items-center gap-2">
+              <div className={`text-xs font-medium transition-colors ${
+                timeStore.timeSpeed <= 0.5 ? 'text-green-300' :
+                timeStore.timeSpeed <= 2 ? 'text-blue-300' :
+                timeStore.timeSpeed <= 10 ? 'text-yellow-300' :
+                timeStore.timeSpeed <= 100 ? 'text-orange-300' :
+                timeStore.timeSpeed <= 1000 ? 'text-red-300' :
+                'text-purple-300'
+              }`}>
+                {timeStore.timeSpeed >= 1000 ? (timeStore.timeSpeed / 1000).toFixed(1) + 'k' : 
+                 timeStore.timeSpeed >= 100 ? timeStore.timeSpeed.toFixed(0) : 
+                 timeStore.timeSpeed.toFixed(1)}x
+              </div>
+              {/* Speed indicator icon */}
+              <div className="text-xs">
+                {timeStore.timeSpeed <= 0.5 ? '🐌' :
+                 timeStore.timeSpeed <= 2 ? '🚶' :
+                 timeStore.timeSpeed <= 10 ? '🏃' :
+                 timeStore.timeSpeed <= 100 ? '🚀' :
+                 timeStore.timeSpeed <= 1000 ? '⚡' : '💫'}
+              </div>
+              {/* Reset to normal speed */}
+              {timeStore.timeSpeed !== 1 && (
+                <button
+                  onClick={resetSpeed}
+                  className="text-[10px] text-gray-400 hover:text-white transition-colors px-1 py-0.5 rounded"
+                  title="Reset to normal speed (1x)"
+                >
+                  ↻
+                </button>
+              )}
+            </div>
+            <div className="relative w-full">
+              <input
+                type="range"
+                min="0.1"
+                max="10000"
+                step="any"
+                value={timeStore.timeSpeed}
+                onChange={handleSpeedChange}
+                className="speed-slider w-full h-1.5 bg-gray-600/30 rounded-lg appearance-none cursor-pointer backdrop-blur-sm"
+                aria-label="Simulation speed"
+              />
+              {/* Speed markers and presets */}
+              <div className="flex justify-between items-center text-[8px] text-gray-400 mt-1 px-1">
+                <button 
+                  onClick={() => setSpeedPreset(0.1)}
+                  className={`text-[8px] hover:text-white transition-colors px-1 py-0.5 rounded ${timeStore.timeSpeed === 0.1 ? 'text-blue-300' : ''}`}
+                  title="Slow: 0.1x speed"
+                >
+                  0.1x
+                </button>
+                <button 
+                  onClick={() => setSpeedPreset(1)}
+                  className={`text-[8px] hover:text-white transition-colors px-1 py-0.5 rounded ${timeStore.timeSpeed === 1 ? 'text-blue-300' : ''}`}
+                  title="Normal: 1x speed"
+                >
+                  1x
+                </button>
+                <button 
+                  onClick={() => setSpeedPreset(10)}
+                  className={`text-[8px] hover:text-white transition-colors px-1 py-0.5 rounded ${timeStore.timeSpeed === 10 ? 'text-blue-300' : ''}`}
+                  title="Fast: 10x speed"
+                >
+                  10x
+                </button>
+                <button 
+                  onClick={() => setSpeedPreset(100)}
+                  className={`text-[8px] hover:text-white transition-colors px-1 py-0.5 rounded ${timeStore.timeSpeed === 100 ? 'text-blue-300' : ''}`}
+                  title="Ultra: 100x speed"
+                >
+                  100x
+                </button>
+                <button 
+                  onClick={() => setSpeedPreset(1000)}
+                  className={`text-[8px] hover:text-white transition-colors px-1 py-0.5 rounded ${timeStore.timeSpeed === 1000 ? 'text-blue-300' : ''}`}
+                  title="Hyper: 1000x speed"
+                >
+                  1000x
+                </button>
+                <button 
+                  onClick={() => setSpeedPreset(10000)}
+                  className={`text-[8px] hover:text-white transition-colors px-1 py-0.5 rounded ${timeStore.timeSpeed === 10000 ? 'text-blue-300' : ''}`}
+                  title="Extreme: 10000x speed"
+                >
+                  10000x
+                </button>
+              </div>
+            </div>
           </div>
+          
+          {/* Speed Increase Button */}
           <button
             onClick={increaseSpeed}
-            className="liquid-glass-button-compact px-2 py-1 text-white text-xs"
+            className="liquid-glass-button-compact px-2 py-1 text-white text-xs hover:bg-white/10 transition-colors"
             aria-label="Increase speed"
           >
             +

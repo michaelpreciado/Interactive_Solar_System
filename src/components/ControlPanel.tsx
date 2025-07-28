@@ -124,6 +124,18 @@ export const ControlPanel: React.FC = () => {
               <div>• <span className="text-green-300">Logarithmic</span>: Balanced</div>
             </div>
           </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center space-x-1">
+              <div className="w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
+              <strong className="text-orange-200 text-xs">Orbit Lines:</strong>
+            </div>
+            <div className="ml-3 space-y-0.5 text-[10px]">
+              <div>• Show gravitational paths</div>
+              <div>• Animated field indicators</div>
+              <div>• Direction arrows</div>
+            </div>
+          </div>
           
           <div className="space-y-1">
             <div className="flex items-center space-x-1">
@@ -134,6 +146,9 @@ export const ControlPanel: React.FC = () => {
               <div>• Play/Pause: Animate</div>
               <div>• Slider: Jump to time</div>
               <div>• Speed: Adjust rate</div>
+              <div>• <span className="text-yellow-300">+/-</span>: Speed up/down</div>
+              <div>• <span className="text-yellow-300">0</span>: Reset speed</div>
+              <div>• <span className="text-yellow-300">1-6</span>: Speed presets</div>
             </div>
           </div>
         </div>
