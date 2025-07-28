@@ -19,7 +19,7 @@ export const QuizDisplay: React.FC = () => {
   }, [showQuiz, currentQuiz])
 
   useEffect(() => {
-    let interval: NodeJS.Timeout
+    let interval: ReturnType<typeof setInterval>
     if (timerActive && timeLeft > 0) {
       interval = setInterval(() => {
         setTimeLeft(timeLeft - 1)

@@ -33,7 +33,7 @@ export const LessonPlayer: React.FC = () => {
   }, [currentStep, isLessonActive, isPaused])
 
   useEffect(() => {
-    let interval: NodeJS.Timeout
+    let interval: ReturnType<typeof setInterval>
     if (isLessonActive && !isPaused && stepTimer > 0 && autoAdvance) {
       interval = setInterval(() => {
         setStepTimer(prev => {
