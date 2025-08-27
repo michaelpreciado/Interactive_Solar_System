@@ -1,4 +1,4 @@
-// Performance utilities for mobile optimization
+// Performance utilities for mobile optimization targeting 120fps
 export interface PerformanceSettings {
   // Geometry settings
   planetGeometryDetail: number
@@ -18,46 +18,69 @@ export interface PerformanceSettings {
   enableShadows: boolean
   maxLights: number
   pixelRatio: number
+  enableAntialiasing: boolean
   
   // Animation settings
   enableAnimations: boolean
   animationFrameRate: number
+  targetFPS: number
   
   // UI settings
   enableGlassEffects: boolean
   enableRippleEffects: boolean
   backdropBlurStrength: number
+  
+  // Mobile-specific optimizations
+  useInstancedRendering: boolean
+  enableFrustumCulling: boolean
+  enableLOD: boolean
+  reducedPrecision: boolean
 }
 
-// Detect device type and capabilities
+// Detect device type and capabilities with enhanced mobile detection
 export const detectDeviceCapabilities = () => {
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
   const isAndroid = /Android/.test(navigator.userAgent)
   const isTablet = /(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(navigator.userAgent)
   
-  // Detect performance level based on device and specs
+  // Enhanced device specs detection
   const memory = (navigator as any).deviceMemory || 4 // Fallback to 4GB
   const cores = navigator.hardwareConcurrency || 4
   const pixelRatio = window.devicePixelRatio || 1
   
-  // Check WebGL capabilities
+  // Check WebGL capabilities and extensions
   const canvas = document.createElement('canvas')
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl') as WebGLRenderingContext | null
+  const gl2 = canvas.getContext('webgl2') as WebGL2RenderingContext | null
   const renderer = gl ? gl.getParameter(gl.RENDERER) || '' : ''
   const vendor = gl ? gl.getParameter(gl.VENDOR) || '' : ''
   
-  // Determine performance tier
-  let performanceTier: 'low' | 'medium' | 'high' = 'medium'
+  // Check for specific GPU capabilities
+  const hasInstancedArrays = gl?.getExtension('ANGLE_instanced_arrays') || gl2
+  const hasFloatTextures = gl?.getExtension('OES_texture_float') || gl2
+  const hasHalfFloatTextures = gl?.getExtension('OES_texture_half_float') || gl2
+  
+  // Detect high refresh rate displays (120Hz+)
+  const supportsHighRefreshRate = isIOS && (screen as any).maximumFramesPerSecond >= 120
+  
+  // More sophisticated performance tier detection
+  let performanceTier: 'low' | 'medium' | 'high' | 'ultra' = 'medium'
   
   if (isMobile) {
-    if (memory <= 2 || cores <= 2) {
+    // Mobile performance classification
+    if (memory <= 2 || cores <= 4) {
       performanceTier = 'low'
+    } else if (memory >= 8 && cores >= 8 && supportsHighRefreshRate) {
+      performanceTier = 'ultra' // Latest flagship phones
     } else if (memory >= 6 && cores >= 6) {
       performanceTier = 'high'
     }
   } else {
-    if (memory >= 8 && cores >= 8) {
+    // Desktop performance classification
+    if (memory >= 16 && cores >= 8) {
+      performanceTier = 'ultra'
+    } else if (memory >= 8 && cores >= 8) {
       performanceTier = 'high'
     } else if (memory <= 4 || cores <= 4) {
       performanceTier = 'low'
@@ -75,7 +98,13 @@ export const detectDeviceCapabilities = () => {
     renderer,
     vendor,
     performanceTier,
-    supportsWebGL2: !!document.createElement('canvas').getContext('webgl2')
+    supportsWebGL2: !!gl2,
+    hasInstancedArrays: !!hasInstancedArrays,
+    hasFloatTextures: !!hasFloatTextures,
+    hasHalfFloatTextures: !!hasHalfFloatTextures,
+    supportsHighRefreshRate,
+    screenWidth: screen.width,
+    screenHeight: screen.height
   }
 }
 
@@ -83,100 +112,162 @@ export const detectDeviceCapabilities = () => {
 export const getPerformanceSettings = (): PerformanceSettings => {
   const capabilities = detectDeviceCapabilities()
   
-  // Base settings for different performance tiers
+  // Base settings for different performance tiers targeting 120fps
   const settings: Record<string, PerformanceSettings> = {
     low: {
       // Minimal geometry detail
-      planetGeometryDetail: 16,
-      moonGeometryDetail: 12,
-      orbitSegments: 32,
+      planetGeometryDetail: 12,
+      moonGeometryDetail: 8,
+      orbitSegments: 24,
       
       // Disable heavy visual effects
       enableAtmosphere: false,
-      enableRings: true, // Keep rings but simplified
+      enableRings: false,
       enableMoonFeatures: false,
       enableOrbitalLights: false,
       enableStarfield: true,
-      starfieldCount: 1000,
+      starfieldCount: 500,
       
       // Minimal rendering quality
-      shadowMapSize: 512,
+      shadowMapSize: 256,
       enableShadows: false,
-      maxLights: 2,
-      pixelRatio: Math.min(capabilities.pixelRatio, 1.5),
+      maxLights: 1,
+      pixelRatio: Math.min(capabilities.pixelRatio, 1),
+      enableAntialiasing: false,
       
-      // Reduced animations
+      // Performance-focused animations
       enableAnimations: true,
-      animationFrameRate: 30,
+      animationFrameRate: 60,
+      targetFPS: 60,
       
       // Simplified UI
       enableGlassEffects: false,
       enableRippleEffects: false,
-      backdropBlurStrength: 5,
+      backdropBlurStrength: 0,
+      
+      // Mobile optimizations
+      useInstancedRendering: false,
+      enableFrustumCulling: true,
+      enableLOD: true,
+      reducedPrecision: true,
     },
     
     medium: {
       // Moderate geometry detail
-      planetGeometryDetail: 32,
-      moonGeometryDetail: 20,
-      orbitSegments: 64,
+      planetGeometryDetail: 24,
+      moonGeometryDetail: 16,
+      orbitSegments: 48,
       
       // Some visual effects enabled
-      enableAtmosphere: capabilities.isMobile ? false : true,
+      enableAtmosphere: false, // Still disabled for performance
       enableRings: true,
-      enableMoonFeatures: true,
-      enableOrbitalLights: true,
+      enableMoonFeatures: false,
+      enableOrbitalLights: capabilities.isMobile ? false : true,
       enableStarfield: true,
-      starfieldCount: 3000,
+      starfieldCount: capabilities.isMobile ? 1500 : 3000,
       
       // Moderate rendering quality
-      shadowMapSize: 1024,
-      enableShadows: !capabilities.isMobile,
-      maxLights: 4,
-      pixelRatio: Math.min(capabilities.pixelRatio, 2),
+      shadowMapSize: capabilities.isMobile ? 512 : 1024,
+      enableShadows: false, // Disabled for mobile performance
+      maxLights: capabilities.isMobile ? 2 : 4,
+      pixelRatio: Math.min(capabilities.pixelRatio, capabilities.isMobile ? 1.5 : 2),
+      enableAntialiasing: !capabilities.isMobile,
       
       // Standard animations
       enableAnimations: true,
-      animationFrameRate: 60,
+      animationFrameRate: capabilities.supportsHighRefreshRate ? 120 : 60,
+      targetFPS: capabilities.supportsHighRefreshRate ? 120 : 60,
       
       // Standard UI
       enableGlassEffects: !capabilities.isMobile,
-      enableRippleEffects: !capabilities.isMobile,
-      backdropBlurStrength: capabilities.isMobile ? 10 : 20,
+      enableRippleEffects: false, // Disabled for performance
+      backdropBlurStrength: capabilities.isMobile ? 5 : 15,
+      
+      // Mobile optimizations
+      useInstancedRendering: capabilities.hasInstancedArrays,
+      enableFrustumCulling: true,
+      enableLOD: true,
+      reducedPrecision: capabilities.isMobile,
     },
     
     high: {
       // High geometry detail
-      planetGeometryDetail: 64,
-      moonGeometryDetail: 32,
-      orbitSegments: 128,
+      planetGeometryDetail: 48,
+      moonGeometryDetail: 24,
+      orbitSegments: 96,
       
-      // All visual effects enabled
+      // More visual effects enabled
+      enableAtmosphere: !capabilities.isMobile, // Still cautious on mobile
+      enableRings: true,
+      enableMoonFeatures: true,
+      enableOrbitalLights: true,
+      enableStarfield: true,
+      starfieldCount: capabilities.isMobile ? 3000 : 5000,
+      
+      // High rendering quality
+      shadowMapSize: capabilities.isMobile ? 1024 : 2048,
+      enableShadows: !capabilities.isMobile, // Still disabled on mobile
+      maxLights: capabilities.isMobile ? 4 : 8,
+      pixelRatio: Math.min(capabilities.pixelRatio, capabilities.isMobile ? 2 : 2),
+      enableAntialiasing: !capabilities.isMobile,
+      
+      // High-performance animations
+      enableAnimations: true,
+      animationFrameRate: capabilities.supportsHighRefreshRate ? 120 : 60,
+      targetFPS: capabilities.supportsHighRefreshRate ? 120 : 60,
+      
+      // Enhanced UI
+      enableGlassEffects: true,
+      enableRippleEffects: !capabilities.isMobile,
+      backdropBlurStrength: capabilities.isMobile ? 10 : 25,
+      
+      // Mobile optimizations
+      useInstancedRendering: capabilities.hasInstancedArrays,
+      enableFrustumCulling: true,
+      enableLOD: true,
+      reducedPrecision: false,
+    },
+    
+    ultra: {
+      // Ultra geometry detail for flagship devices
+      planetGeometryDetail: capabilities.isMobile ? 32 : 64,
+      moonGeometryDetail: capabilities.isMobile ? 20 : 32,
+      orbitSegments: capabilities.isMobile ? 64 : 128,
+      
+      // All visual effects for ultra devices
       enableAtmosphere: true,
       enableRings: true,
       enableMoonFeatures: true,
       enableOrbitalLights: true,
       enableStarfield: true,
-      starfieldCount: 5000,
+      starfieldCount: capabilities.isMobile ? 4000 : 8000,
       
-      // High rendering quality
-      shadowMapSize: 2048,
-      enableShadows: true,
-      maxLights: 8,
-      pixelRatio: Math.min(capabilities.pixelRatio, 2),
+      // Ultra rendering quality
+      shadowMapSize: capabilities.isMobile ? 1024 : 4096,
+      enableShadows: true, // Enabled for ultra tier
+      maxLights: capabilities.isMobile ? 6 : 12,
+      pixelRatio: Math.min(capabilities.pixelRatio, capabilities.isMobile ? 2 : 3),
+      enableAntialiasing: true,
       
-      // Full animations
+      // Maximum performance animations
       enableAnimations: true,
-      animationFrameRate: 60,
+      animationFrameRate: capabilities.supportsHighRefreshRate ? 120 : 60,
+      targetFPS: capabilities.supportsHighRefreshRate ? 120 : 60,
       
       // Full UI effects
       enableGlassEffects: true,
       enableRippleEffects: true,
-      backdropBlurStrength: 25,
+      backdropBlurStrength: capabilities.isMobile ? 15 : 30,
+      
+      // All optimizations
+      useInstancedRendering: capabilities.hasInstancedArrays,
+      enableFrustumCulling: true,
+      enableLOD: true,
+      reducedPrecision: false,
     }
   }
   
-  return settings[capabilities.performanceTier]
+  return settings[capabilities.performanceTier] || settings.medium
 }
 
 // Memory management utilities
@@ -209,17 +300,30 @@ export const createMemoryMonitor = () => {
   }
 }
 
-// Performance monitoring
-export const createPerformanceMonitor = () => {
+// Enhanced performance monitoring for 120fps targets
+export const createPerformanceMonitor = (targetFPS: number = 60) => {
   let frameCount = 0
   let lastTime = performance.now()
-  let fps = 60
+  let fps = targetFPS
+  let frameTimeHistory: number[] = []
+  let lastFrameTime = performance.now()
+  
+  const maxHistoryLength = 60 // Keep last 60 frame times
   
   return {
     update: () => {
       frameCount++
       const currentTime = performance.now()
       
+      // Track individual frame times for better analysis
+      const frameTime = currentTime - lastFrameTime
+      frameTimeHistory.push(frameTime)
+      if (frameTimeHistory.length > maxHistoryLength) {
+        frameTimeHistory.shift()
+      }
+      lastFrameTime = currentTime
+      
+      // Calculate FPS every second
       if (currentTime - lastTime >= 1000) {
         fps = Math.round((frameCount * 1000) / (currentTime - lastTime))
         frameCount = 0
@@ -231,9 +335,39 @@ export const createPerformanceMonitor = () => {
     
     getFPS: () => fps,
     
-    shouldReduceQuality: () => fps < 30,
+    getAverageFrameTime: () => {
+      if (frameTimeHistory.length === 0) return 16.67 // ~60fps default
+      return frameTimeHistory.reduce((a, b) => a + b, 0) / frameTimeHistory.length
+    },
     
-    shouldIncreaseQuality: () => fps > 55
+    getFrameTimeVariance: () => {
+      if (frameTimeHistory.length < 2) return 0
+      const avg = frameTimeHistory.reduce((a, b) => a + b, 0) / frameTimeHistory.length
+      const variance = frameTimeHistory.reduce((sum, time) => sum + Math.pow(time - avg, 2), 0) / frameTimeHistory.length
+      return Math.sqrt(variance)
+    },
+    
+    // More sophisticated quality adjustment based on target FPS
+    shouldReduceQuality: () => {
+      const threshold = targetFPS * 0.8 // 80% of target
+      return fps < threshold || frameTimeHistory.some(time => time > (1000 / targetFPS) * 1.5)
+    },
+    
+    shouldIncreaseQuality: () => {
+      const threshold = targetFPS * 0.95 // 95% of target
+      const avgFrameTime = frameTimeHistory.reduce((a, b) => a + b, 0) / frameTimeHistory.length
+      return fps > threshold && avgFrameTime < (1000 / targetFPS) * 0.8
+    },
+    
+    // Check if performance is stable
+    isPerformanceStable: () => {
+      if (frameTimeHistory.length < 30) return false
+      const variance = frameTimeHistory.reduce((sum, time) => {
+        const target = 1000 / targetFPS
+        return sum + Math.abs(time - target)
+      }, 0) / frameTimeHistory.length
+      return variance < 2 // Stable if average deviation is less than 2ms
+    }
   }
 }
 
@@ -284,6 +418,22 @@ const disposeMaterial = (material: any) => {
   material.dispose()
 }
 
+// High-performance frame rate limiter for 120fps
+export const createFrameRateLimiter = (targetFPS: number) => {
+  const targetFrameTime = 1000 / targetFPS
+  let lastFrameTime = 0
+  
+  return (callback: () => void) => {
+    const currentTime = performance.now()
+    const deltaTime = currentTime - lastFrameTime
+    
+    if (deltaTime >= targetFrameTime) {
+      lastFrameTime = currentTime - (deltaTime % targetFrameTime)
+      callback()
+    }
+  }
+}
+
 // Throttle function for expensive operations
 export const throttle = <T extends (...args: any[]) => any>(
   func: T,
@@ -299,6 +449,35 @@ export const throttle = <T extends (...args: any[]) => any>(
   }
 }
 
+// Mobile-optimized WebGL context creation
+export const createOptimizedWebGLContext = (canvas: HTMLCanvasElement, targetFPS: number = 60) => {
+  const contextAttributes: WebGLContextAttributes = {
+    alpha: false, // Better performance
+    antialias: false, // Disable for mobile performance
+    depth: true,
+    failIfMajorPerformanceCaveat: false,
+    powerPreference: 'high-performance',
+    premultipliedAlpha: false,
+    preserveDrawingBuffer: false,
+    stencil: false,
+    desynchronized: targetFPS > 60, // Enable for high refresh rate
+  }
+  
+  const gl = canvas.getContext('webgl2', contextAttributes) || 
+             canvas.getContext('webgl', contextAttributes)
+  
+  if (gl && targetFPS > 60) {
+    // Request high refresh rate if supported
+    try {
+      (canvas as any).style.imageRendering = 'pixelated'
+    } catch (e) {
+      // Ignore if not supported
+    }
+  }
+  
+  return gl
+}
+
 // Debounce function for resize events
 export const debounce = <T extends (...args: any[]) => any>(
   func: T,
@@ -308,5 +487,39 @@ export const debounce = <T extends (...args: any[]) => any>(
   return function(this: any, ...args: Parameters<T>) {
     clearTimeout(timeoutId)
     timeoutId = setTimeout(() => func.apply(this, args), delay)
+  }
+}
+
+// Mobile-specific performance utilities
+export const mobileOptimizations = {
+  // Reduce precision for mobile shaders
+  getShaderPrecision: (isMobile: boolean, isLowEnd: boolean) => {
+    if (isLowEnd) return 'lowp'
+    return isMobile ? 'mediump' : 'highp'
+  },
+  
+  // Optimize texture sizes for mobile
+  getOptimalTextureSize: (originalSize: number, isMobile: boolean, performanceTier: string) => {
+    if (!isMobile) return originalSize
+    
+    const maxSizes = {
+      low: 512,
+      medium: 1024,
+      high: 2048,
+      ultra: 2048
+    }
+    
+    return Math.min(originalSize, maxSizes[performanceTier as keyof typeof maxSizes] || 1024)
+  },
+  
+  // Battery and thermal management
+  shouldReduceQualityForThermal: () => {
+    // Check if device is getting warm (if supported)
+    if ('getBattery' in navigator) {
+      return (navigator as any).getBattery().then((battery: any) => {
+        return battery.level < 0.2 // Reduce quality if battery is low
+      })
+    }
+    return Promise.resolve(false)
   }
 } 

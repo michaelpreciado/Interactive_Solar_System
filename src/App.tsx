@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Stars } from '@react-three/drei'
+import { OrbitControls } from '@react-three/drei'
 import { SolarSystem } from './components/SolarSystem'
 import { ControlPanel } from './components/ControlPanel'
 import { TimeScrubber } from './components/TimeScrubber'
@@ -10,11 +10,15 @@ import { FactDisplay } from './components/FactDisplay'
 import { QuizDisplay } from './components/QuizDisplay'
 import { LessonPlayer } from './components/LessonPlayer'
 import { PlanetComparison } from './components/PlanetComparison'
+import { EnhancedStarfield } from './components/EnhancedStarfield'
+import { CosmicEffects } from './components/CosmicEffects'
+import { AdaptiveQualityManager, PerformanceDebugOverlay } from './components/AdaptiveQualityManager'
+import { MobileTouchControls, useMobileTouchOptimizations } from './components/MobileTouchControls'
 import { useUIStore, useReducedMotionDetector, usePerformanceMonitor } from './stores/useUIStore'
 import { useEducationStore } from './stores/useEducationStore'
 import { useTimeStore } from './stores/useTimeStore'
 import { getPlanetPositions } from './utils/planetaryCalculations'
-import { createMemoryMonitor, throttle, debounce } from './utils/performanceUtils'
+import { createMemoryMonitor, throttle, debounce, createOptimizedWebGLContext } from './utils/performanceUtils'
 
 // Loading component with performance considerations
 const LoadingSpinner = () => (
@@ -42,10 +46,12 @@ function App() {
   
   // Local state for educational UI
   const [showEducationalDashboard, setShowEducationalDashboard] = useState(false)
+  const [showDebugOverlay, setShowDebugOverlay] = useState(false)
   
   // Initialize performance hooks
   useReducedMotionDetector()
   usePerformanceMonitor()
+  useMobileTouchOptimizations()
   
   // Memory monitoring
   const memoryMonitor = useMemo(() => createMemoryMonitor(), [])
@@ -103,10 +109,10 @@ function App() {
     far: scaleMode === 'realistic' ? 10000 : scaleMode === 'logarithmic' ? 5000 : 2000
   }), [deviceCapabilities.isMobile, scaleMode])
 
-  // Canvas configuration optimized for device capabilities
+  // Canvas configuration optimized for 120fps mobile performance
   const canvasConfig = useMemo(() => ({
-    dpr: deviceCapabilities.pixelRatio,
-    antialias: !deviceCapabilities.isMobile, // Disable antialiasing on mobile for performance
+    dpr: Math.min(deviceCapabilities.pixelRatio, performanceSettings.pixelRatio),
+    antialias: performanceSettings.enableAntialiasing && !deviceCapabilities.isMobile,
     alpha: false, // Better performance
     powerPreference: 'high-performance' as WebGLPowerPreference,
     failIfMajorPerformanceCaveat: false,
@@ -114,8 +120,14 @@ function App() {
     premultipliedAlpha: false,
     depth: true,
     stencil: false,
-    shadows: performanceSettings.enableShadows
-  }), [deviceCapabilities.pixelRatio, deviceCapabilities.isMobile, performanceSettings.enableShadows])
+    shadows: performanceSettings.enableShadows,
+    frameloop: 'always', // Ensure consistent frame rate
+    performance: {
+      min: 0.8, // Lower bound for adaptive performance
+      max: 1.2, // Upper bound for adaptive performance
+      debounce: 200 // Debounce performance adjustments
+    }
+  }), [deviceCapabilities, performanceSettings])
 
   // Controls configuration
   const controlsConfig = useMemo(() => {
@@ -174,24 +186,44 @@ function App() {
             shadow-mapSize-height={performanceSettings.shadowMapSize}
           />
           
-          {/* Starfield */}
-          {starsConfig && (
-            <Stars
-              radius={starsConfig.radius}
-              depth={starsConfig.depth}
-              count={starsConfig.count}
-              factor={starsConfig.factor}
-              saturation={starsConfig.saturation}
-              fade={starsConfig.fade}
-              speed={starsConfig.speed}
+          {/* Enhanced Starfield */}
+          {performanceSettings.enableStarfield && (
+            <EnhancedStarfield
+              radius={scaleMode === 'realistic' ? 1500 : scaleMode === 'logarithmic' ? 1000 : 600}
+              depth={100}
+              count={performanceSettings.starfieldCount}
+              layers={deviceCapabilities.isMobile ? 2 : 3}
+            />
+          )}
+          
+          {/* Cosmic Effects */}
+          <CosmicEffects />
+          
+          {/* Adaptive Quality Manager */}
+          <AdaptiveQualityManager />
+          
+          {/* Mobile Touch Controls */}
+          {deviceCapabilities.isMobile && (
+            <MobileTouchControls
+              enabled={true}
+              enablePan={true}
+              enableZoom={true}
+              enableRotate={true}
+              minDistance={controlsConfig.minDistance}
+              maxDistance={controlsConfig.maxDistance}
+              zoomSpeed={controlsConfig.zoomSpeed}
+              rotateSpeed={controlsConfig.rotateSpeed}
+              panSpeed={controlsConfig.panSpeed}
             />
           )}
           
           {/* Solar System */}
           <SolarSystem planets={planets} />
           
-          {/* Camera Controls */}
-          <OrbitControls {...controlsConfig} />
+          {/* Camera Controls - Only for desktop */}
+          {!deviceCapabilities.isMobile && (
+            <OrbitControls {...controlsConfig} />
+          )}
         </Suspense>
       </Canvas>
       
@@ -211,6 +243,18 @@ function App() {
             🎓 Learning Center
           </button>
         </div>
+        
+        {/* Debug Toggle for Mobile */}
+        {deviceCapabilities.isMobile && (
+          <div className="absolute top-2 left-2 pointer-events-auto">
+            <button
+              onClick={() => setShowDebugOverlay(!showDebugOverlay)}
+              className="liquid-glass-button-compact px-2 py-1 text-xs opacity-50"
+            >
+              📊
+            </button>
+          </div>
+        )}
         
         {/* Time Scrubber */}
         <div className="absolute bottom-2 left-2 right-2 pointer-events-auto">
@@ -239,6 +283,9 @@ function App() {
       <FactDisplay />
       <QuizDisplay />
       <LessonPlayer />
+      
+      {/* Performance Debug Overlay */}
+      <PerformanceDebugOverlay visible={showDebugOverlay} />
       
       {/* Loading Fallback */}
       <Suspense fallback={<LoadingSpinner />}>

@@ -15,23 +15,26 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "@react-three/drei": "^9.92.7",
+    "@react-three/fiber": "^8.15.12",
+    "@react-three/postprocessing": "^2.15.11",
+    "@use-gesture/react": "^10.3.1",
+    "framer-motion": "^10.16.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@react-three/fiber": "^8.15.12",
-    "@react-three/drei": "^9.92.7",
-    "three": "^0.168.0",
-    "zustand": "^4.4.7",
-    "@react-three/postprocessing": "^2.15.11",
     "react-use-gesture": "^9.1.3",
-    "framer-motion": "^10.16.16"
+    "three": "^0.168.0",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.40.1",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@types/three": "^0.168.0",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/ui": "^1.0.4",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.55.0",
     "eslint-plugin-react-hooks": "^4.6.0",
@@ -44,12 +47,15 @@
     "typescript": "^5.2.2",
     "vite": "^5.0.8",
     "vite-plugin-wasm": "^3.2.2",
-    "vitest": "^1.0.4",
-    "@playwright/test": "^1.40.1",
-    "@vitest/ui": "^1.0.4"
+    "vitest": "^1.0.4"
   },
   "lint-staged": {
-    "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
-    "*.{js,jsx,ts,tsx,json,css,md}": ["prettier --write"]
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx,ts,tsx,json,css,md}": [
+      "prettier --write"
+    ]
   }
-} 
+}

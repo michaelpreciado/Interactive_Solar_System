@@ -62,34 +62,9 @@ export const SolarSystem: React.FC<SolarSystemProps> = ({ planets }) => {
       {/* Orbit paths */}
       {showOrbits && <Orbits planets={planets} />}
       
-      {/* Starfield */}
-      <Stars
-        radius={scaleMode === 'realistic' ? 1500 : scaleMode === 'logarithmic' ? 1000 : 600}
-        depth={100}
-        count={5000}
-        factor={4}
-        saturation={0}
-        fade
-        speed={prefersReducedMotion ? 0 : 0.5}
-      />
+      {/* Starfield is now handled in App.tsx with EnhancedStarfield */}
       
-      {/* Controls */}
-      <OrbitControls
-        ref={controlsRef}
-        enablePan={true}
-        enableZoom={true}
-        enableRotate={true}
-        zoomSpeed={controlsSettings.zoomSpeed}
-        panSpeed={controlsSettings.panSpeed}
-        rotateSpeed={0.5}
-        minDistance={controlsSettings.minDistance}
-        maxDistance={controlsSettings.maxDistance}
-        minPolarAngle={0}
-        maxPolarAngle={Math.PI}
-        enableDamping={true}
-        dampingFactor={0.05}
-        makeDefault
-      />
+      {/* Controls are now handled in App.tsx for mobile optimization */}
     </>
   )
 } 
