@@ -16,12 +16,19 @@ import { useTimeStore } from './stores/useTimeStore'
 import { getPlanetPositions } from './utils/planetaryCalculations'
 import { createMemoryMonitor, throttle, debounce } from './utils/performanceUtils'
 
-// Loading component with performance considerations
+// Enhanced Loading component with iOS-style design
 const LoadingSpinner = () => (
-  <div className="fixed inset-0 bg-space-dark flex items-center justify-center z-50">
-    <div className="liquid-glass-panel text-center">
-      <div className="animate-spin w-8 h-8 border-2 border-cosmic-purple border-t-transparent rounded-full mx-auto mb-4"></div>
-      <p className="text-white">Loading Solar System...</p>
+  <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-xl">
+    <div className="lg-island text-center p-8 animate-lg-scale-in">
+      <div className="loading-spinner mx-auto mb-6"></div>
+      <h3 className="text-white font-bold text-lg mb-2">Loading Solar System</h3>
+      <p className="text-gray-400 text-sm">Preparing your cosmic journey...</p>
+
+      {/* Loading skeleton */}
+      <div className="mt-6 space-y-3">
+        <div className="skeleton skeleton-text"></div>
+        <div className="skeleton skeleton-text w-3/4 mx-auto"></div>
+      </div>
     </div>
   </div>
 )
@@ -195,34 +202,69 @@ function App() {
         </Suspense>
       </Canvas>
       
-      {/* UI Overlay */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Control Panel */}
-        <div className="absolute top-2 left-2 pointer-events-auto">
-          <ControlPanel />
-        </div>
-        
-        {/* Educational Dashboard Button */}
-        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 pointer-events-auto">
-          <button
-            onClick={() => setShowEducationalDashboard(true)}
-            className="liquid-glass-button-compact px-3 py-1 text-xs"
-          >
-            🎓 Learning Center
-          </button>
-        </div>
-        
-        {/* Time Scrubber */}
-        <div className="absolute bottom-2 left-2 right-2 pointer-events-auto">
-          <TimeScrubber />
-        </div>
-        
-        {/* Planet Info */}
-        {selectedPlanetData && (
-          <div className="absolute top-2 right-2 pointer-events-auto">
-            <PlanetInfo planet={selectedPlanetData} />
+      {/* Enhanced Responsive UI Overlay */}
+      <div className="absolute inset-0 pointer-events-none safe-top safe-bottom safe-left safe-right">
+        {/* Desktop Layout */}
+        <div className="hidden md:block">
+          {/* Control Panel - Top Left */}
+          <div className="absolute top-4 left-4 pointer-events-auto animate-lg-slide-in">
+            <ControlPanel />
           </div>
-        )}
+
+          {/* Educational Dashboard Button - Top Center */}
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-auto animate-lg-fade-in">
+            <button
+              onClick={() => setShowEducationalDashboard(true)}
+              className="lg-button-primary px-6 py-3 hover-lift hover-glow shadow-lg"
+            >
+              <span className="text-lg mr-2">🎓</span>
+              <span className="font-semibold">Learning Center</span>
+            </button>
+          </div>
+
+          {/* Planet Info - Top Right */}
+          {selectedPlanetData && (
+            <div className="absolute top-4 right-4 pointer-events-auto animate-lg-scale-in">
+              <PlanetInfo planet={selectedPlanetData} />
+            </div>
+          )}
+
+          {/* Time Scrubber - Bottom */}
+          <div className="absolute bottom-4 left-4 right-4 pointer-events-auto">
+            <TimeScrubber />
+          </div>
+        </div>
+
+        {/* Mobile Layout */}
+        <div className="md:hidden">
+          {/* Control Panel - Top Left (Compact) */}
+          <div className="absolute top-3 left-3 pointer-events-auto animate-lg-slide-in">
+            <ControlPanel />
+          </div>
+
+          {/* Educational Dashboard Button - Top Right (Mobile) */}
+          <div className="absolute top-3 right-3 pointer-events-auto animate-lg-fade-in">
+            <button
+              onClick={() => setShowEducationalDashboard(true)}
+              className="lg-play-compact hover-scale shadow-lg"
+              aria-label="Open Learning Center"
+            >
+              <span className="text-xl">🎓</span>
+            </button>
+          </div>
+
+          {/* Planet Info - Bottom Sheet Style */}
+          {selectedPlanetData && (
+            <div className="absolute bottom-20 left-3 right-3 pointer-events-auto animate-lg-bounce-in">
+              <PlanetInfo planet={selectedPlanetData} />
+            </div>
+          )}
+
+          {/* Time Scrubber - Bottom (Mobile) */}
+          <div className="absolute bottom-3 left-3 right-3 pointer-events-auto">
+            <TimeScrubber />
+          </div>
+        </div>
       </div>
       
       {/* Educational Components */}
