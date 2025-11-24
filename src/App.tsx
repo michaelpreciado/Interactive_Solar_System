@@ -207,12 +207,12 @@ function App() {
         {/* Desktop Layout */}
         <div className="hidden md:block">
           {/* Control Panel - Top Left */}
-          <div className="absolute top-4 left-4 pointer-events-auto animate-lg-slide-in">
+          <div className="absolute top-3 left-3 pointer-events-auto animate-lg-slide-in max-w-[300px]">
             <ControlPanel />
           </div>
 
           {/* Educational Dashboard Button - Top Center */}
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-auto animate-lg-fade-in">
+          <div className="absolute top-3 left-1/2 transform -translate-x-1/2 pointer-events-auto animate-lg-fade-in">
             <button
               onClick={() => setShowEducationalDashboard(true)}
               className="lg-button-primary px-6 py-3 hover-lift hover-glow shadow-lg"
@@ -224,13 +224,13 @@ function App() {
 
           {/* Planet Info - Top Right */}
           {selectedPlanetData && (
-            <div className="absolute top-4 right-4 pointer-events-auto animate-lg-scale-in">
+            <div className="absolute top-3 right-3 pointer-events-auto animate-lg-scale-in max-h-[calc(100vh-200px)] max-w-[300px]">
               <PlanetInfo planet={selectedPlanetData} />
             </div>
           )}
 
           {/* Time Scrubber - Bottom */}
-          <div className="absolute bottom-4 left-4 right-4 pointer-events-auto">
+          <div className="absolute bottom-3 left-3 right-3 pointer-events-auto">
             <TimeScrubber />
           </div>
         </div>
@@ -238,12 +238,12 @@ function App() {
         {/* Mobile Layout */}
         <div className="md:hidden">
           {/* Control Panel - Top Left (Compact) */}
-          <div className="absolute top-3 left-3 pointer-events-auto animate-lg-slide-in">
+          <div className="absolute top-2 left-2 pointer-events-auto animate-lg-slide-in max-w-[calc(100vw-100px)]">
             <ControlPanel />
           </div>
 
           {/* Educational Dashboard Button - Top Right (Mobile) */}
-          <div className="absolute top-3 right-3 pointer-events-auto animate-lg-fade-in">
+          <div className="absolute top-2 right-2 pointer-events-auto animate-lg-fade-in">
             <button
               onClick={() => setShowEducationalDashboard(true)}
               className="lg-play-compact hover-scale shadow-lg"
@@ -255,13 +255,13 @@ function App() {
 
           {/* Planet Info - Bottom Sheet Style */}
           {selectedPlanetData && (
-            <div className="absolute bottom-20 left-3 right-3 pointer-events-auto animate-lg-bounce-in">
+            <div className="absolute bottom-16 sm:bottom-20 left-2 right-2 pointer-events-auto animate-lg-bounce-in max-h-[40vh]">
               <PlanetInfo planet={selectedPlanetData} />
             </div>
           )}
 
           {/* Time Scrubber - Bottom (Mobile) */}
-          <div className="absolute bottom-3 left-3 right-3 pointer-events-auto">
+          <div className="absolute bottom-2 left-2 right-2 pointer-events-auto">
             <TimeScrubber />
           </div>
         </div>

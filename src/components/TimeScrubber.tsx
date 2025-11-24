@@ -113,8 +113,8 @@ export const TimeScrubber: React.FC = () => {
   }, [handleKeyDown])
 
   return (
-    <div className="lg-panel-compact p-4 rounded-2xl backdrop-blur-3xl border border-white/10">
-      <div className="flex flex-col md:flex-row items-center gap-4">
+    <div className="lg-panel-compact rounded-2xl backdrop-blur-3xl border border-white/10">
+      <div className="flex flex-col md:flex-row items-center gap-2 sm:gap-3 md:gap-4">
         {/* Play/Pause Button - iOS Style */}
         <button
           onClick={togglePlayPause}
@@ -149,11 +149,11 @@ export const TimeScrubber: React.FC = () => {
             </div>
 
             {/* Current Date Display - Dynamic Island Style */}
-            <div className="lg-island px-6 py-2 min-w-[140px] text-center">
-              <div className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-0.5">
+            <div className="lg-island px-3 py-1.5 sm:px-4 sm:py-2 min-w-[100px] sm:min-w-[120px] text-center">
+              <div className="text-[9px] sm:text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5">
                 Date
               </div>
-              <div className="font-mono text-sm font-bold text-white">
+              <div className="font-mono text-xs sm:text-sm font-bold text-white">
                 {timeStore.currentDate}
               </div>
             </div>
@@ -166,22 +166,22 @@ export const TimeScrubber: React.FC = () => {
         </div>
 
         {/* Speed Control - iOS Style */}
-        <div className="flex-shrink-0">
-          <div className="lg-glass-secondary rounded-2xl p-3 border border-white/10">
-            <div className="flex items-center gap-3">
+        <div className="flex-shrink-0 w-full md:w-auto">
+          <div className="lg-glass-secondary rounded-2xl p-2 sm:p-2.5 border border-white/10">
+            <div className="flex items-center gap-2 sm:gap-3">
               {/* Decrease Speed */}
               <button
                 onClick={decreaseSpeed}
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white font-bold text-lg transition-all hover-scale"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white font-bold text-base sm:text-lg transition-all hover-scale"
                 aria-label="Decrease speed"
               >
                 −
               </button>
 
               {/* Speed Display */}
-              <div className="min-w-[100px] text-center">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <span className={`text-2xl font-bold bg-gradient-to-r ${
+              <div className="min-w-[80px] sm:min-w-[90px] text-center">
+                <div className="flex items-center justify-center gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
+                  <span className={`text-lg sm:text-xl font-bold bg-gradient-to-r ${
                     timeStore.timeSpeed <= 0.5 ? 'from-green-400 to-emerald-400' :
                     timeStore.timeSpeed <= 2 ? 'from-blue-400 to-cyan-400' :
                     timeStore.timeSpeed <= 10 ? 'from-yellow-400 to-orange-400' :
@@ -193,7 +193,7 @@ export const TimeScrubber: React.FC = () => {
                      timeStore.timeSpeed >= 100 ? timeStore.timeSpeed.toFixed(0) :
                      timeStore.timeSpeed.toFixed(1)}×
                   </span>
-                  <span className="text-xl">
+                  <span className="text-base sm:text-lg">
                     {timeStore.timeSpeed <= 0.5 ? '🐌' :
                      timeStore.timeSpeed <= 2 ? '🚶' :
                      timeStore.timeSpeed <= 10 ? '🏃' :
@@ -201,7 +201,7 @@ export const TimeScrubber: React.FC = () => {
                      timeStore.timeSpeed <= 1000 ? '⚡' : '💫'}
                   </span>
                 </div>
-                <div className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">
+                <div className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider font-semibold">
                   Speed
                 </div>
               </div>
@@ -209,7 +209,7 @@ export const TimeScrubber: React.FC = () => {
               {/* Increase Speed */}
               <button
                 onClick={increaseSpeed}
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white font-bold text-lg transition-all hover-scale"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white font-bold text-base sm:text-lg transition-all hover-scale"
                 aria-label="Increase speed"
               >
                 +
@@ -217,19 +217,21 @@ export const TimeScrubber: React.FC = () => {
             </div>
 
             {/* Speed Presets - iOS Pill Style */}
-            <div className="flex flex-wrap gap-1.5 mt-3 justify-center">
+            <div className="flex flex-wrap gap-1 sm:gap-1.5 mt-2 sm:mt-2.5 justify-center">
               {[
-                { value: 0.1, label: '0.1×' },
-                { value: 1, label: '1×' },
-                { value: 10, label: '10×' },
-                { value: 100, label: '100×' },
-                { value: 1000, label: '1K×' },
-                { value: 10000, label: '10K×' }
+                { value: 0.1, label: '0.1×', hideMobile: false },
+                { value: 1, label: '1×', hideMobile: false },
+                { value: 10, label: '10×', hideMobile: false },
+                { value: 100, label: '100×', hideMobile: false },
+                { value: 1000, label: '1K×', hideMobile: true },
+                { value: 10000, label: '10K×', hideMobile: true }
               ].map(preset => (
                 <button
                   key={preset.value}
                   onClick={() => setSpeedPreset(preset.value)}
-                  className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all hover-scale ${
+                  className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-semibold transition-all hover-scale ${
+                    preset.hideMobile ? 'hidden sm:inline-block' : ''
+                  } ${
                     timeStore.timeSpeed === preset.value
                       ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
                       : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'

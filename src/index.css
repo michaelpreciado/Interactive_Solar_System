@@ -105,6 +105,17 @@
 }
 
 /* Responsive Breakpoints - Mobile First */
+/* Extra Small Devices (< 375px) - iPhone SE, small phones */
+@media (max-width: 374px) {
+  :root {
+    --lg-blur-regular: 12px;
+    --lg-blur-thick: 24px;
+    --duration-fast: 0.15s;
+    --duration-normal: 0.25s;
+  }
+}
+
+/* Small Devices (375px - 640px) - Most phones */
 @media (max-width: 640px) {
   :root {
     --lg-blur-regular: 16px;
@@ -626,17 +637,47 @@
 
 /* ═══ MOBILE OPTIMIZATIONS ═══ */
 
+/* Extra Small Mobile Devices */
+@media (max-width: 374px) {
+  .lg-glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .lg-panel-compact {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .lg-button {
+    min-height: 44px; /* iOS touch target */
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .lg-button-compact {
+    min-height: 36px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+/* Standard Mobile Devices */
 @media (max-width: 768px) {
   .lg-glass {
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
-  
+
+  .lg-panel-compact {
+    padding: 14px;
+  }
+
   .lg-button {
     min-height: 44px; /* iOS touch target */
     padding: 12px 16px;
   }
-  
+
   .lg-button-compact {
     min-height: 36px;
     padding: 8px 12px;
@@ -1085,27 +1126,58 @@ input:focus-visible,
 
 /* ═══ RESPONSIVE UTILITIES ═══ */
 
-/* Mobile - Portrait */
-@media (max-width: 640px) {
+/* Extra Small Mobile - Portrait */
+@media (max-width: 374px) {
   .lg-panel {
-    padding: 20px;
-    border-radius: 20px;
+    padding: 14px;
+    border-radius: 16px;
   }
 
   .lg-panel-compact {
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .lg-button {
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .lg-island {
+    padding: 8px 16px;
+    border-radius: 24px;
+  }
+
+  .fab {
+    bottom: 12px;
+    right: 12px;
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* Mobile - Portrait */
+@media (max-width: 640px) {
+  .lg-panel {
     padding: 16px;
+    border-radius: 18px;
+  }
+
+  .lg-panel-compact {
+    padding: 12px;
     border-radius: 16px;
   }
 
   .lg-button {
-    min-height: 48px;
-    padding: 14px 20px;
-    font-size: 16px;
+    min-height: 44px;
+    padding: 12px 16px;
+    font-size: 15px;
   }
 
   .lg-island {
-    padding: 10px 20px;
-    border-radius: 28px;
+    padding: 10px 18px;
+    border-radius: 26px;
   }
 
   .fab {
