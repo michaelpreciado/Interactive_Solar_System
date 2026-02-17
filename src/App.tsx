@@ -1,27 +1,38 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react'
-import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Stars } from '@react-three/drei'
-import { SolarSystem } from './components/SolarSystem'
-import { ControlPanel } from './components/ControlPanel'
-import { TimeScrubber } from './components/TimeScrubber'
-import { PlanetInfo } from './components/PlanetInfo'
-import { EducationalDashboard } from './components/EducationalDashboard'
-import { FactDisplay } from './components/FactDisplay'
-import { QuizDisplay } from './components/QuizDisplay'
-import { LessonPlayer } from './components/LessonPlayer'
-import { PlanetComparison } from './components/PlanetComparison'
-import { useUIStore, useReducedMotionDetector, usePerformanceMonitor } from './stores/useUIStore'
-import { useEducationStore } from './stores/useEducationStore'
-import { useTimeStore } from './stores/useTimeStore'
-import { getPlanetPositions } from './utils/planetaryCalculations'
-import { createMemoryMonitor, throttle, debounce } from './utils/performanceUtils'
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Stars } from '@react-three/drei';
+import { SolarSystem } from './components/SolarSystem';
+import { ControlPanel } from './components/ControlPanel';
+import { TimeScrubber } from './components/TimeScrubber';
+import { PlanetInfo } from './components/PlanetInfo';
+import { EducationalDashboard } from './components/EducationalDashboard';
+import { FactDisplay } from './components/FactDisplay';
+import { QuizDisplay } from './components/QuizDisplay';
+import { LessonPlayer } from './components/LessonPlayer';
+import { PlanetComparison } from './components/PlanetComparison';
+import {
+  useUIStore,
+  useReducedMotionDetector,
+  usePerformanceMonitor,
+} from './stores/useUIStore';
+import { useEducationStore } from './stores/useEducationStore';
+import { useTimeStore } from './stores/useTimeStore';
+import { getPlanetPositions } from './utils/planetaryCalculations';
+import {
+  createMemoryMonitor,
+  throttle,
+  debounce,
+} from './utils/performanceUtils';
+import { logger } from './utils/logger';
 
 // Enhanced Loading component with iOS-style design
 const LoadingSpinner = () => (
   <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-xl">
     <div className="lg-island text-center p-8 animate-lg-scale-in">
       <div className="loading-spinner mx-auto mb-6"></div>
-      <h3 className="text-white font-bold text-lg mb-2">Loading Solar System</h3>
+      <h3 className="text-white font-bold text-lg mb-2">
+        Loading Solar System
+      </h3>
       <p className="text-gray-400 text-sm">Preparing your cosmic journey...</p>
 
       {/* Loading skeleton */}
@@ -31,102 +42,132 @@ const LoadingSpinner = () => (
       </div>
     </div>
   </div>
-)
+);
 
 function App() {
-  const { 
-    selectedPlanet, 
-    scaleMode, 
-    performanceSettings, 
+  const {
+    selectedPlanet,
+    scaleMode,
+    performanceSettings,
     deviceCapabilities,
-    setDevicePixelRatio 
-  } = useUIStore()
-  
-  const { currentTime } = useTimeStore()
-  
+    setDevicePixelRatio,
+  } = useUIStore();
+
+  const { currentTime } = useTimeStore();
+
   // Educational state
-  const { showComparison } = useEducationStore()
-  
+  const { showComparison } = useEducationStore();
+
   // Local state for educational UI
-  const [showEducationalDashboard, setShowEducationalDashboard] = useState(false)
-  
+  const [showEducationalDashboard, setShowEducationalDashboard] =
+    useState(false);
+
   // Initialize performance hooks
-  useReducedMotionDetector()
-  usePerformanceMonitor()
-  
+  useReducedMotionDetector();
+  usePerformanceMonitor();
+
   // Memory monitoring
-  const memoryMonitor = useMemo(() => createMemoryMonitor(), [])
-  
+  const memoryMonitor = useMemo(() => createMemoryMonitor(), []);
+
   // Throttled memory check for performance
   const checkMemory = useMemo(
-    () => throttle(() => {
-      const result = memoryMonitor.checkMemoryUsage()
-      if (result.warning) {
-        console.warn('High memory usage detected, consider reducing quality settings')
-      }
-    }, 5000),
+    () =>
+      throttle(() => {
+        const result = memoryMonitor.checkMemoryUsage();
+        if (result.warning) {
+          logger.warn(
+            'High memory usage detected; consider reducing quality settings.',
+            { usage: result.usage }
+          );
+        }
+      }, 5000),
     [memoryMonitor]
-  )
-  
+  );
+
   // Debounced resize handler
   const handleResize = useMemo(
-    () => debounce(() => {
-      setDevicePixelRatio(window.devicePixelRatio)
-    }, 300),
+    () =>
+      debounce(() => {
+        setDevicePixelRatio(window.devicePixelRatio);
+      }, 300),
     [setDevicePixelRatio]
-  )
-  
+  );
+
   // Performance monitoring and optimization
   useEffect(() => {
     // Set up memory monitoring
-    const memoryInterval = setInterval(checkMemory, 10000) // Check every 10 seconds
-    
+    const memoryInterval = setInterval(checkMemory, 10000); // Check every 10 seconds
+
     // Set up resize listener
-    window.addEventListener('resize', handleResize)
-    
+    window.addEventListener('resize', handleResize);
+
     // Cleanup
     return () => {
-      clearInterval(memoryInterval)
-      window.removeEventListener('resize', handleResize)
-    }
-  }, [checkMemory, handleResize])
-  
+      clearInterval(memoryInterval);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [checkMemory, handleResize]);
+
   // Calculate planet positions with performance considerations
   const planets = useMemo(() => {
-    return getPlanetPositions(currentTime, scaleMode)
-  }, [currentTime, scaleMode])
-  
+    return getPlanetPositions(currentTime, scaleMode);
+  }, [currentTime, scaleMode]);
+
   // Find the selected planet data
   const selectedPlanetData = useMemo(() => {
-    if (!selectedPlanet) return null
-    return planets.find(planet => planet.name.toLowerCase() === selectedPlanet.toLowerCase()) || null
-  }, [selectedPlanet, planets])
+    if (!selectedPlanet) return null;
+    return (
+      planets.find(
+        (planet) => planet.name.toLowerCase() === selectedPlanet.toLowerCase()
+      ) || null
+    );
+  }, [selectedPlanet, planets]);
 
   // Camera settings optimized for mobile
-  const cameraSettings = useMemo(() => ({
-    position: [50, 50, 50] as [number, number, number],
-    fov: deviceCapabilities.isMobile ? 60 : 75,
-    near: 0.1,
-    far: scaleMode === 'realistic' ? 10000 : scaleMode === 'logarithmic' ? 5000 : 2000
-  }), [deviceCapabilities.isMobile, scaleMode])
+  const cameraSettings = useMemo(
+    () => ({
+      position: [50, 50, 50] as [number, number, number],
+      fov: deviceCapabilities.isMobile ? 60 : 75,
+      near: 0.1,
+      far:
+        scaleMode === 'realistic'
+          ? 10000
+          : scaleMode === 'logarithmic'
+            ? 5000
+            : 2000,
+    }),
+    [deviceCapabilities.isMobile, scaleMode]
+  );
 
   // Canvas configuration optimized for device capabilities
-  const canvasConfig = useMemo(() => ({
-    dpr: deviceCapabilities.pixelRatio,
-    antialias: !deviceCapabilities.isMobile, // Disable antialiasing on mobile for performance
-    alpha: false, // Better performance
-    powerPreference: 'high-performance' as WebGLPowerPreference,
-    failIfMajorPerformanceCaveat: false,
-    preserveDrawingBuffer: false, // Better performance
-    premultipliedAlpha: false,
-    depth: true,
-    stencil: false,
-    shadows: performanceSettings.enableShadows
-  }), [deviceCapabilities.pixelRatio, deviceCapabilities.isMobile, performanceSettings.enableShadows])
+  const canvasConfig = useMemo(
+    () => ({
+      dpr: deviceCapabilities.pixelRatio,
+      antialias: !deviceCapabilities.isMobile, // Disable antialiasing on mobile for performance
+      alpha: false, // Better performance
+      powerPreference: 'high-performance' as WebGLPowerPreference,
+      failIfMajorPerformanceCaveat: false,
+      preserveDrawingBuffer: false, // Better performance
+      premultipliedAlpha: false,
+      depth: true,
+      stencil: false,
+      shadows: performanceSettings.enableShadows,
+    }),
+    [
+      deviceCapabilities.pixelRatio,
+      deviceCapabilities.isMobile,
+      performanceSettings.enableShadows,
+    ]
+  );
 
   // Controls configuration
   const controlsConfig = useMemo(() => {
-    const baseDistance = scaleMode === 'realistic' ? 2000 : scaleMode === 'logarithmic' ? 1000 : 500
+    const baseDistance =
+      scaleMode === 'realistic'
+        ? 2000
+        : scaleMode === 'logarithmic'
+          ? 1000
+          : 500;
     return {
       enablePan: true,
       enableZoom: true,
@@ -142,25 +183,34 @@ function App() {
       dampingFactor: 0.05,
       touches: {
         ONE: 2, // TOUCH.ROTATE
-        TWO: 1  // TOUCH.DOLLY_PAN
-      }
-    }
-  }, [scaleMode, deviceCapabilities.isMobile])
+        TWO: 1, // TOUCH.DOLLY_PAN
+      },
+    };
+  }, [scaleMode, deviceCapabilities.isMobile]);
 
   // Stars configuration based on performance
   const starsConfig = useMemo(() => {
-    if (!performanceSettings.enableStarfield) return null
-    
+    if (!performanceSettings.enableStarfield) return null;
+
     return {
-      radius: scaleMode === 'realistic' ? 1500 : scaleMode === 'logarithmic' ? 1000 : 600,
+      radius:
+        scaleMode === 'realistic'
+          ? 1500
+          : scaleMode === 'logarithmic'
+            ? 1000
+            : 600,
       depth: 100,
       count: performanceSettings.starfieldCount,
       factor: 4,
       saturation: 0,
       fade: true,
-      speed: 0.5
-    }
-  }, [performanceSettings.enableStarfield, performanceSettings.starfieldCount, scaleMode])
+      speed: 0.5,
+    };
+  }, [
+    performanceSettings.enableStarfield,
+    performanceSettings.starfieldCount,
+    scaleMode,
+  ]);
 
   return (
     <div className="w-full h-screen bg-space-dark overflow-hidden">
@@ -180,7 +230,7 @@ function App() {
             shadow-mapSize-width={performanceSettings.shadowMapSize}
             shadow-mapSize-height={performanceSettings.shadowMapSize}
           />
-          
+
           {/* Starfield */}
           {starsConfig && (
             <Stars
@@ -193,15 +243,15 @@ function App() {
               speed={starsConfig.speed}
             />
           )}
-          
+
           {/* Solar System */}
           <SolarSystem planets={planets} />
-          
+
           {/* Camera Controls */}
           <OrbitControls {...controlsConfig} />
         </Suspense>
       </Canvas>
-      
+
       {/* Enhanced Responsive UI Overlay */}
       <div className="absolute inset-0 pointer-events-none safe-top safe-bottom safe-left safe-right">
         {/* Desktop Layout */}
@@ -266,28 +316,30 @@ function App() {
           </div>
         </div>
       </div>
-      
+
       {/* Educational Components */}
       <EducationalDashboard
         isOpen={showEducationalDashboard}
         onClose={() => setShowEducationalDashboard(false)}
       />
-      
+
       <PlanetComparison
         isOpen={showComparison}
-        onClose={() => {/* Close comparison logic */}}
+        onClose={() => {
+          /* Close comparison logic */
+        }}
       />
-      
+
       <FactDisplay />
       <QuizDisplay />
       <LessonPlayer />
-      
+
       {/* Loading Fallback */}
       <Suspense fallback={<LoadingSpinner />}>
         <div />
       </Suspense>
     </div>
-  )
+  );
 }
 
-export default App 
+export default App;
