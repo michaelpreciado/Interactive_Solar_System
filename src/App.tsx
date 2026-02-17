@@ -15,6 +15,7 @@ import { useEducationStore } from './stores/useEducationStore'
 import { useTimeStore } from './stores/useTimeStore'
 import { getPlanetPositions } from './utils/planetaryCalculations'
 import { createMemoryMonitor, throttle, debounce } from './utils/performanceUtils'
+import { logger } from './utils/logger'
 
 // Enhanced Loading component with iOS-style design
 const LoadingSpinner = () => (
@@ -62,7 +63,7 @@ function App() {
     () => throttle(() => {
       const result = memoryMonitor.checkMemoryUsage()
       if (result.warning) {
-        console.warn('High memory usage detected, consider reducing quality settings')
+        logger.warn('High memory usage detected, consider reducing quality settings')
       }
     }, 5000),
     [memoryMonitor]

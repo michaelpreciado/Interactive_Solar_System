@@ -3,6 +3,13 @@ import react from '@vitejs/plugin-react'
 import wasm from 'vite-plugin-wasm'
 import { resolve } from 'path'
 
+const securityHeaders = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), wasm()],
@@ -24,11 +31,16 @@ export default defineConfig({
     },
   },
   server: {
+    headers: securityHeaders,
     fs: {
-      allow: ['..']
-    }
+      strict: true,
+      allow: [resolve(__dirname)],
+    },
+  },
+  preview: {
+    headers: securityHeaders,
   },
   optimizeDeps: {
-    exclude: ['@rust-wasm/solar-system']
-  }
-}) 
+    exclude: ['@rust-wasm/solar-system'],
+  },
+})

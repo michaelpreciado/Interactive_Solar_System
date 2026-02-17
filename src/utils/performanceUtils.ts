@@ -1,3 +1,5 @@
+import { logger } from './logger'
+
 // Performance utilities for mobile optimization
 export interface PerformanceSettings {
   // Geometry settings
@@ -191,7 +193,7 @@ export const createMemoryMonitor = () => {
         const usedPercent = memory.usedJSHeapSize / memory.jsHeapSizeLimit
         
         if (usedPercent > memoryWarningThreshold) {
-          console.warn('High memory usage detected:', Math.round(usedPercent * 100) + '%')
+          logger.warn('High memory usage detected', { usedPercent: Math.round(usedPercent * 100) })
           return { warning: true, usage: usedPercent }
         }
         

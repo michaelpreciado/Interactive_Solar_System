@@ -1,3 +1,5 @@
+import { logger } from './logger'
+
 // WebGL Debugger Utility
 export class WebGLDebugger {
   static checkWebGLSupport(): boolean {
@@ -5,7 +7,7 @@ export class WebGLDebugger {
       const canvas = document.createElement('canvas')
       const gl = canvas.getContext('webgl') as WebGLRenderingContext | null
       return !!gl
-    } catch (e) {
+    } catch {
       return false
     }
   }
@@ -34,20 +36,20 @@ export class WebGLDebugger {
         maxVertexUniforms: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS),
         maxFragmentUniforms: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS)
       }
-    } catch (e) {
+    } catch {
       return null
     }
   }
 
   static logWebGLInfo(): void {
     if (!this.checkWebGLSupport()) {
-      console.warn('🚨 WebGL is not supported on this device')
+      logger.warn('WebGL is not supported on this device')
       return
     }
 
     const info = this.getWebGLInfo()
     if (info) {
-      console.log('🎮 WebGL Info:', info)
+      logger.debug('WebGL runtime information', info)
     }
   }
 
@@ -60,7 +62,10 @@ export class WebGLDebugger {
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
       const error = gl.getShaderInfoLog(shader)
-      console.error(`Shader compilation error (${type === gl.VERTEX_SHADER ? 'vertex' : 'fragment'}):`, error)
+      logger.error('Shader compilation error', {
+        shaderType: type === gl.VERTEX_SHADER ? 'vertex' : 'fragment',
+        error,
+      })
       gl.deleteShader(shader)
       return false
     }
@@ -90,7 +95,7 @@ export class WebGLPerformanceMonitor {
       this.fps = Math.round((this.frameCount * 1000) / (currentTime - this.lastTime))
       
       if (this.fps < 30) {
-        console.warn(`⚠️ Low FPS detected: ${this.fps}fps`)
+        logger.warn('Low FPS detected', { fps: this.fps })
       }
       
       this.frameCount = 0

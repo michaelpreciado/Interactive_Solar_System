@@ -1,4 +1,5 @@
 import React from 'react'
+import { logger } from '../utils/logger'
 
 interface ErrorBoundaryState {
   hasError: boolean
@@ -20,7 +21,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Solar System Error:', error, errorInfo)
+    logger.error('Solar System render failure', { error: error.message, componentStack: errorInfo.componentStack })
   }
 
   render() {
