@@ -7,6 +7,9 @@ const MILLISECONDS_PER_DAY = 86400000;
 const MIN_TIME_YEAR = 0;
 const MAX_TIME_YEAR = 10000;
 
+const SPEED_MAX = 10000;
+const SPEED_MIN = 0.1;
+
 interface TimeStore {
   currentTime: number;
   julianDate: number;
@@ -16,6 +19,8 @@ interface TimeStore {
   setCurrentTime: (time: number) => void;
   setIsPlaying: (playing: boolean) => void;
   setTimeSpeed: (speed: number) => void;
+  increaseTimeSpeed: () => void;
+  decreaseTimeSpeed: () => void;
   tick: () => void;
 }
 
@@ -54,6 +59,14 @@ const julianDateToString = (julianDate: number): string => {
   return `${year}-${month}-${day}`;
 };
 
+/** Returns the smart step size for speed adjustment at a given current speed. */
+const getSpeedStep = (speed: number): number => {
+  if (speed >= 1000) return 100;
+  if (speed >= 100) return 10;
+  if (speed >= 10) return 1;
+  return 0.1;
+};
+
 export const useTimeStore = create<TimeStore>((set, get) => ({
   currentTime: 0,
   julianDate: yearToJulianDate(0),
@@ -64,7 +77,6 @@ export const useTimeStore = create<TimeStore>((set, get) => ({
   setCurrentTime: (time) => {
     const clampedTime = clampTime(time);
     const julianDate = yearToJulianDate(clampedTime);
-
     set({
       currentTime: clampedTime,
       julianDate,
@@ -75,19 +87,27 @@ export const useTimeStore = create<TimeStore>((set, get) => ({
   setIsPlaying: (playing) => set({ isPlaying: playing }),
 
   setTimeSpeed: (speed) => {
-    if (!Number.isFinite(speed) || speed <= 0) {
-      return;
-    }
-
+    if (!Number.isFinite(speed) || speed <= 0) return;
     set({ timeSpeed: speed });
+  },
+
+  increaseTimeSpeed: () => {
+    const { timeSpeed } = get();
+    const step = getSpeedStep(timeSpeed);
+    const newSpeed = Math.min(SPEED_MAX, timeSpeed + step);
+    set({ timeSpeed: newSpeed });
+  },
+
+  decreaseTimeSpeed: () => {
+    const { timeSpeed } = get();
+    const step = getSpeedStep(timeSpeed);
+    const newSpeed = Math.max(SPEED_MIN, timeSpeed - step);
+    set({ timeSpeed: newSpeed });
   },
 
   tick: () => {
     const { currentTime, isPlaying, timeSpeed } = get();
-    if (!isPlaying) {
-      return;
-    }
-
+    if (!isPlaying) return;
     const timeIncrement = timeSpeed / (60 * DAYS_PER_YEAR);
     const newTime = currentTime + timeIncrement;
     get().setCurrentTime(newTime > MAX_TIME_YEAR ? MIN_TIME_YEAR : newTime);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useUIStore } from '../stores/useUIStore'
 import { getDistanceInfo } from '../utils/planetaryCalculations'
 
@@ -14,12 +14,7 @@ export const ControlPanel: React.FC = () => {
     toggleScaleMode
   } = useUIStore()
 
-  const [expandedSection, setExpandedSection] = useState<string | null>(null)
   const distanceInfo = getDistanceInfo(scaleMode)
-
-  const toggleSection = (section: string) => {
-    setExpandedSection(expandedSection === section ? null : section)
-  }
 
   return (
     <div className="lg-panel-compact p-4 space-y-4 w-64 animate-lg-fade-in">

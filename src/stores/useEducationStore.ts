@@ -115,6 +115,7 @@ export interface EducationState {
   submitQuizAnswer: (answer: string | string[]) => void
   
   // Comparison tools
+  openComparison: () => void
   addPlanetToComparison: (planetName: string) => void
   removePlanetFromComparison: (planetName: string) => void
   clearComparison: () => void
@@ -779,6 +780,8 @@ export const useEducationStore = create<EducationState>((set, get) => ({
   },
   
   // Comparison tools
+  openComparison: () => set({ showComparison: true }),
+
   addPlanetToComparison: (planetName) => set((state) => {
     if (state.selectedPlanetsForComparison.length < 4 && 
         !state.selectedPlanetsForComparison.includes(planetName)) {
