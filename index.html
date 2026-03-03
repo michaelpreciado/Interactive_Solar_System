@@ -11,7 +11,6 @@
   <meta name="apple-mobile-web-app-title" content="Solar System">
   <meta name="theme-color" content="#1B2735">
   <meta name="msapplication-navbutton-color" content="#1B2735">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
   <!-- Performance optimizations -->
   <meta name="format-detection" content="telephone=no">
@@ -73,6 +72,7 @@
     #root {
       width: 100%;
       height: 100vh;
+      height: 100dvh;
       position: relative;
     }
     
@@ -173,14 +173,18 @@
           console.log('DOM Content Loaded:', perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart);
         }
         
-        // Monitor FPS
+        // Monitor FPS for the first 10 seconds only (avoid permanent battery drain)
         let lastTime = performance.now();
         let frameCount = 0;
-        
+        const FPS_MONITOR_DURATION = 10000;
+        const monitorStart = performance.now();
+        let rafId;
+
         function measureFPS() {
           const currentTime = performance.now();
+          if (currentTime - monitorStart > FPS_MONITOR_DURATION) return;
           frameCount++;
-          
+
           if (currentTime - lastTime >= 1000) {
             const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
             if (fps < 30) {
@@ -189,11 +193,11 @@
             frameCount = 0;
             lastTime = currentTime;
           }
-          
-          requestAnimationFrame(measureFPS);
+
+          rafId = requestAnimationFrame(measureFPS);
         }
-        
-        requestAnimationFrame(measureFPS);
+
+        rafId = requestAnimationFrame(measureFPS);
       });
     }
   </script>
