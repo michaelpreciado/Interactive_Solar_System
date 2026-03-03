@@ -162,7 +162,7 @@ export const TimeScrubber: React.FC = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={decreaseTimeSpeed}
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white font-bold text-lg transition-all hover-scale"
+                className="w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white font-bold text-lg transition-all hover-scale"
                 aria-label="Decrease speed"
               >
                 −
@@ -197,7 +197,7 @@ export const TimeScrubber: React.FC = () => {
 
               <button
                 onClick={increaseTimeSpeed}
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white font-bold text-lg transition-all hover-scale"
+                className="w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white font-bold text-lg transition-all hover-scale"
                 aria-label="Increase speed"
               >
                 +
@@ -217,7 +217,7 @@ export const TimeScrubber: React.FC = () => {
                 <button
                   key={preset.value}
                   onClick={() => setSpeedPreset(preset.value)}
-                  className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all hover-scale ${
+                  className={`px-3 py-1.5 rounded-full text-[10px] font-semibold transition-all hover-scale min-h-[32px] ${
                     timeSpeed === preset.value
                       ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
                       : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'

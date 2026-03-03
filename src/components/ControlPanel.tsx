@@ -17,7 +17,7 @@ export const ControlPanel: React.FC = () => {
   const distanceInfo = getDistanceInfo(scaleMode)
 
   return (
-    <div className="lg-panel-compact p-4 space-y-4 w-64 animate-lg-fade-in">
+    <div className="lg-panel-compact p-4 space-y-4 w-64 max-w-[calc(100vw-1.5rem)] animate-lg-fade-in">
       {/* Header with gradient */}
       <div className="relative">
         <h3 className="text-base font-bold text-white mb-1 tracking-tight">

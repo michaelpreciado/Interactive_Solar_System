@@ -10,7 +10,8 @@ interface SolarSystemProps {
 }
 
 export const SolarSystem: React.FC<SolarSystemProps> = ({ planets }) => {
-  const { showOrbits, showLabels } = useUIStore()
+  const { showOrbits, showLabels, performanceSettings } = useUIStore()
+  const shadowMapSize = performanceSettings.shadowMapSize
 
   return (
     <>
@@ -20,7 +21,7 @@ export const SolarSystem: React.FC<SolarSystemProps> = ({ planets }) => {
         position={[0, 100, 0]}
         intensity={2}
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[shadowMapSize, shadowMapSize]}
         shadow-camera-far={2000}
         shadow-camera-left={-200}
         shadow-camera-right={200}

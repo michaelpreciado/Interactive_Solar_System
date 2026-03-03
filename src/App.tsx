@@ -127,7 +127,7 @@ function App() {
       dpr: deviceCapabilities.pixelRatio,
       antialias: !deviceCapabilities.isMobile,
       alpha: false,
-      powerPreference: 'high-performance' as WebGLPowerPreference,
+      powerPreference: (deviceCapabilities.isMobile ? 'default' : 'high-performance') as WebGLPowerPreference,
       failIfMajorPerformanceCaveat: false,
       preserveDrawingBuffer: false,
       premultipliedAlpha: false,
@@ -195,7 +195,7 @@ function App() {
   ]);
 
   return (
-    <div className="w-full h-screen bg-space-dark overflow-hidden">
+    <div className="w-full h-screen [height:100dvh] bg-space-dark overflow-hidden">
       {/* Main Canvas */}
       <Canvas
         camera={cameraSettings}
