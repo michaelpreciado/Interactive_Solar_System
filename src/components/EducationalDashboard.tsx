@@ -18,6 +18,7 @@ export const EducationalDashboard: React.FC<EducationalDashboardProps> = ({ isOp
     startLesson,
     showRandomFact,
     startQuiz,
+    openComparison,
     resetProgress
   } = useEducationStore()
 
@@ -200,7 +201,7 @@ export const EducationalDashboard: React.FC<EducationalDashboardProps> = ({ isOp
             </button>
             
             <button
-              onClick={() => {/* This will open planet comparison */}}
+              onClick={() => { openComparison(); onClose(); }}
               className="liquid-glass-button p-6 text-center"
             >
               <div className="text-2xl mb-2">⚖️</div>

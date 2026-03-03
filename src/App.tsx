@@ -25,7 +25,6 @@ import {
 } from './utils/performanceUtils';
 import { logger } from './utils/logger';
 
-// Enhanced Loading component with iOS-style design
 const LoadingSpinner = () => (
   <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-xl">
     <div className="lg-island text-center p-8 animate-lg-scale-in">
@@ -34,8 +33,6 @@ const LoadingSpinner = () => (
         Loading Solar System
       </h3>
       <p className="text-gray-400 text-sm">Preparing your cosmic journey...</p>
-
-      {/* Loading skeleton */}
       <div className="mt-6 space-y-3">
         <div className="skeleton skeleton-text"></div>
         <div className="skeleton skeleton-text w-3/4 mx-auto"></div>
@@ -50,26 +47,22 @@ function App() {
     scaleMode,
     performanceSettings,
     deviceCapabilities,
+    prefersReducedMotion,
     setDevicePixelRatio,
   } = useUIStore();
 
   const { currentTime } = useTimeStore();
 
-  // Educational state
-  const { showComparison } = useEducationStore();
+  const { showComparison, clearComparison } = useEducationStore();
 
-  // Local state for educational UI
   const [showEducationalDashboard, setShowEducationalDashboard] =
     useState(false);
 
-  // Initialize performance hooks
   useReducedMotionDetector();
   usePerformanceMonitor();
 
-  // Memory monitoring
   const memoryMonitor = useMemo(() => createMemoryMonitor(), []);
 
-  // Throttled memory check for performance
   const checkMemory = useMemo(
     () =>
       throttle(() => {
@@ -84,7 +77,6 @@ function App() {
     [memoryMonitor]
   );
 
-  // Debounced resize handler
   const handleResize = useMemo(
     () =>
       debounce(() => {
@@ -93,27 +85,19 @@ function App() {
     [setDevicePixelRatio]
   );
 
-  // Performance monitoring and optimization
   useEffect(() => {
-    // Set up memory monitoring
-    const memoryInterval = setInterval(checkMemory, 10000); // Check every 10 seconds
-
-    // Set up resize listener
+    const memoryInterval = setInterval(checkMemory, 10000);
     window.addEventListener('resize', handleResize);
-
-    // Cleanup
     return () => {
       clearInterval(memoryInterval);
       window.removeEventListener('resize', handleResize);
     };
   }, [checkMemory, handleResize]);
 
-  // Calculate planet positions with performance considerations
   const planets = useMemo(() => {
     return getPlanetPositions(currentTime, scaleMode);
   }, [currentTime, scaleMode]);
 
-  // Find the selected planet data
   const selectedPlanetData = useMemo(() => {
     if (!selectedPlanet) return null;
     return (
@@ -123,7 +107,6 @@ function App() {
     );
   }, [selectedPlanet, planets]);
 
-  // Camera settings optimized for mobile
   const cameraSettings = useMemo(
     () => ({
       position: [50, 50, 50] as [number, number, number],
@@ -139,15 +122,14 @@ function App() {
     [deviceCapabilities.isMobile, scaleMode]
   );
 
-  // Canvas configuration optimized for device capabilities
   const canvasConfig = useMemo(
     () => ({
       dpr: deviceCapabilities.pixelRatio,
-      antialias: !deviceCapabilities.isMobile, // Disable antialiasing on mobile for performance
-      alpha: false, // Better performance
+      antialias: !deviceCapabilities.isMobile,
+      alpha: false,
       powerPreference: 'high-performance' as WebGLPowerPreference,
       failIfMajorPerformanceCaveat: false,
-      preserveDrawingBuffer: false, // Better performance
+      preserveDrawingBuffer: false,
       premultipliedAlpha: false,
       depth: true,
       stencil: false,
@@ -160,7 +142,6 @@ function App() {
     ]
   );
 
-  // Controls configuration
   const controlsConfig = useMemo(() => {
     const baseDistance =
       scaleMode === 'realistic'
@@ -172,6 +153,8 @@ function App() {
       enablePan: true,
       enableZoom: true,
       enableRotate: true,
+      autoRotate: !prefersReducedMotion,
+      autoRotateSpeed: 0.3,
       zoomSpeed: deviceCapabilities.isMobile ? 0.3 : 0.6,
       panSpeed: deviceCapabilities.isMobile ? 0.3 : 0.8,
       rotateSpeed: deviceCapabilities.isMobile ? 0.3 : 0.5,
@@ -182,16 +165,14 @@ function App() {
       enableDamping: true,
       dampingFactor: 0.05,
       touches: {
-        ONE: 2, // TOUCH.ROTATE
-        TWO: 1, // TOUCH.DOLLY_PAN
+        ONE: 2,
+        TWO: 1,
       },
     };
-  }, [scaleMode, deviceCapabilities.isMobile]);
+  }, [scaleMode, deviceCapabilities.isMobile, prefersReducedMotion]);
 
-  // Stars configuration based on performance
   const starsConfig = useMemo(() => {
     if (!performanceSettings.enableStarfield) return null;
-
     return {
       radius:
         scaleMode === 'realistic'
@@ -204,12 +185,13 @@ function App() {
       factor: 4,
       saturation: 0,
       fade: true,
-      speed: 0.5,
+      speed: prefersReducedMotion ? 0 : 0.5,
     };
   }, [
     performanceSettings.enableStarfield,
     performanceSettings.starfieldCount,
     scaleMode,
+    prefersReducedMotion,
   ]);
 
   return (
@@ -221,16 +203,6 @@ function App() {
         className="w-full h-full"
       >
         <Suspense fallback={null}>
-          {/* Lighting optimized for mobile */}
-          <ambientLight intensity={0.3} />
-          <directionalLight
-            position={[10, 10, 5]}
-            intensity={0.8}
-            castShadow={performanceSettings.enableShadows}
-            shadow-mapSize-width={performanceSettings.shadowMapSize}
-            shadow-mapSize-height={performanceSettings.shadowMapSize}
-          />
-
           {/* Starfield */}
           {starsConfig && (
             <Stars
@@ -244,7 +216,7 @@ function App() {
             />
           )}
 
-          {/* Solar System */}
+          {/* Solar System (includes its own lights) */}
           <SolarSystem planets={planets} />
 
           {/* Camera Controls */}
@@ -252,16 +224,14 @@ function App() {
         </Suspense>
       </Canvas>
 
-      {/* Enhanced Responsive UI Overlay */}
+      {/* Responsive UI Overlay */}
       <div className="absolute inset-0 pointer-events-none safe-top safe-bottom safe-left safe-right">
         {/* Desktop Layout */}
         <div className="hidden md:block">
-          {/* Control Panel - Top Left */}
           <div className="absolute top-4 left-4 pointer-events-auto animate-lg-slide-in">
             <ControlPanel />
           </div>
 
-          {/* Educational Dashboard Button - Top Center */}
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-auto animate-lg-fade-in">
             <button
               onClick={() => setShowEducationalDashboard(true)}
@@ -272,14 +242,12 @@ function App() {
             </button>
           </div>
 
-          {/* Planet Info - Top Right */}
           {selectedPlanetData && (
             <div className="absolute top-4 right-4 pointer-events-auto animate-lg-scale-in">
               <PlanetInfo planet={selectedPlanetData} />
             </div>
           )}
 
-          {/* Time Scrubber - Bottom */}
           <div className="absolute bottom-4 left-4 right-4 pointer-events-auto">
             <TimeScrubber />
           </div>
@@ -287,12 +255,10 @@ function App() {
 
         {/* Mobile Layout */}
         <div className="md:hidden">
-          {/* Control Panel - Top Left (Compact) */}
           <div className="absolute top-3 left-3 pointer-events-auto animate-lg-slide-in">
             <ControlPanel />
           </div>
 
-          {/* Educational Dashboard Button - Top Right (Mobile) */}
           <div className="absolute top-3 right-3 pointer-events-auto animate-lg-fade-in">
             <button
               onClick={() => setShowEducationalDashboard(true)}
@@ -303,14 +269,12 @@ function App() {
             </button>
           </div>
 
-          {/* Planet Info - Bottom Sheet Style */}
           {selectedPlanetData && (
             <div className="absolute bottom-20 left-3 right-3 pointer-events-auto animate-lg-bounce-in">
               <PlanetInfo planet={selectedPlanetData} />
             </div>
           )}
 
-          {/* Time Scrubber - Bottom (Mobile) */}
           <div className="absolute bottom-3 left-3 right-3 pointer-events-auto">
             <TimeScrubber />
           </div>
@@ -325,19 +289,12 @@ function App() {
 
       <PlanetComparison
         isOpen={showComparison}
-        onClose={() => {
-          /* Close comparison logic */
-        }}
+        onClose={clearComparison}
       />
 
       <FactDisplay />
       <QuizDisplay />
       <LessonPlayer />
-
-      {/* Loading Fallback */}
-      <Suspense fallback={<LoadingSpinner />}>
-        <div />
-      </Suspense>
     </div>
   );
 }

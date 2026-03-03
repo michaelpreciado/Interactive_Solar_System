@@ -251,30 +251,6 @@ export const createMemoryMonitor = () => {
   };
 };
 
-export const createPerformanceMonitor = () => {
-  let frameCount = 0;
-  let lastTime = performance.now();
-  let fps = 60;
-
-  return {
-    update: (): number => {
-      frameCount += 1;
-      const currentTime = performance.now();
-
-      if (currentTime - lastTime >= 1000) {
-        fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
-        frameCount = 0;
-        lastTime = currentTime;
-      }
-
-      return fps;
-    },
-    getFPS: (): number => fps,
-    shouldReduceQuality: (): boolean => fps < 30,
-    shouldIncreaseQuality: (): boolean => fps > 55,
-  };
-};
-
 const isDisposable = (value: unknown): value is Disposable => {
   return Boolean(
     value &&
