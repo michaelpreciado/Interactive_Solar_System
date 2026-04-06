@@ -1,74 +1,99 @@
 # Interactive Solar System
 
-Interactive, mobile-first 3D solar system simulation built with React, TypeScript, and Three.js.
+Interactive 3D solar system built with React, TypeScript, and Three.js. The project focuses on responsive exploration, educational overlays, and a richer learning experience than a simple planet viewer.
 
-## Production-Ready README Structure
+## Features
 
-### 1) Overview
+- Real-time 3D solar system visualization
+- Educational panels and fact displays
+- Time controls and orbital exploration
+- Responsive UI for desktop and mobile
+- TypeScript-based frontend architecture
+- Included test and Docker scaffolding
 
-- Real-time planetary visualization with time controls and educational overlays.
-- Built for responsive devices with adaptive rendering settings.
+## Tech Stack
 
-### 2) Tech Stack
+- React
+- TypeScript
+- Vite
+- Three.js
+- React Three Fiber / Drei
+- Zustand
+- Vitest
+- Playwright
+- Docker
 
-- React 18 + TypeScript + Vite
-- Three.js + @react-three/fiber + @react-three/drei
-- Zustand for state management
-- Vitest + Playwright for testing
+## Getting Started
 
-### 3) Prerequisites
+### Prerequisites
 
 - Node.js 20+
 - npm 10+
-- Docker (optional for containerized runtime)
 
-### 4) Local Setup
+### Local development
 
 ```bash
-npm ci
-cp .env.example .env
+npm install
 npm run dev
 ```
 
-### 5) Environment Variables
+### Production build
 
-| Variable                  | Required | Default                 | Description                                              |
-| ------------------------- | -------- | ----------------------- | -------------------------------------------------------- |
-| `VITE_APP_ENV`            | No       | `production`            | Application runtime environment label.                   |
-| `VITE_LOG_LEVEL`          | No       | `info` (`debug` in dev) | Structured log level (`debug`, `info`, `warn`, `error`). |
-| `VITE_ENABLE_WEBGL_DEBUG` | No       | `false`                 | Enables WebGL diagnostics in supported clients.          |
+```bash
+npm run build
+```
 
-### 6) Quality Gates
+### Quality checks
 
 ```bash
 npm run lint
 npm run test -- --run
+npm run test:e2e
+```
+
+## Project Structure
+
+```text
+Interactive_Solar_System/
+├── public/                  # Static assets
+├── src/
+│   ├── components/          # UI and 3D scene components
+│   ├── shaders/             # Custom shader code
+│   ├── stores/              # Zustand stores
+│   ├── test/                # Unit tests
+│   ├── utils/               # Utilities and calculations
+│   └── wasm/                # Experimental/native helpers
+├── tests/                   # End-to-end tests
+├── Dockerfile
+├── docker-compose.yml
+└── vite.config.ts
+```
+
+## Documentation
+
+Additional project notes live in the repo:
+
+- `PROJECT_ARCHITECTURE.md`
+- `EDUCATIONAL_FEATURES.md`
+- `COMPLETION_SUMMARY.md`
+
+## Deployment
+
+### Static hosting
+
+```bash
 npm run build
 ```
 
-### 7) Docker Deployment
+Deploy the generated `dist/` directory to your preferred static host.
+
+### Docker
 
 ```bash
-docker build -t interactive-solar-system:latest .
-docker run --rm -p 8080:80 interactive-solar-system:latest
+docker build -t interactive-solar-system .
+docker run --rm -p 8080:80 interactive-solar-system
 ```
 
-### 8) Docker Compose (Local Runtime)
+## License
 
-```bash
-docker compose up --build
-```
-
-### 9) CI/CD
-
-- GitHub Actions workflow at `.github/workflows/ci.yml` runs:
-  - install (`npm ci`)
-  - build (`npm run build`)
-  - lint (`npm run lint`)
-  - tests (`npm run test -- --run`)
-
-### 10) Security Notes
-
-- Do not commit `.env` files.
-- Keep all runtime configuration in environment variables.
-- Prefer structured logging and avoid leaking sensitive runtime payloads.
+MIT License
