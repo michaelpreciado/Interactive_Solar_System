@@ -238,9 +238,10 @@ export function SceneDriver({ handle, labelLayer, onReady }: SceneDriverProps) {
     rig.minDistance = focusRadius * 1.04;
     rig.maxDistance = 6e6;
 
-    // On a phone the HUD fills the lower two thirds, so centring the subject in
-    // the canvas hides it behind the inspector. Lift it into the clear area.
-    rig.screenBias = size.width < 860 ? 0.16 : 0;
+    // The phone HUD stacks along the bottom edge, so a subject centred in the
+    // canvas sits behind it. Lift it into the clear area -- half the height the
+    // stack occupies, which recentres the subject in what is left.
+    rig.screenBias = size.width <= 860 ? 0.11 : 0;
     rig.setTarget(
       absPos[focusIdx * 3] - floatingOrigin.origin[0],
       absPos[focusIdx * 3 + 1] - floatingOrigin.origin[1],
