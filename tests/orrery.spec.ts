@@ -68,6 +68,24 @@ async function boot(page: Page, query = '?tier=high'): Promise<string[]> {
   return errors;
 }
 
+/**
+ * Open the inspector's detail section if it is closed.
+ *
+ * On a phone the panel opens collapsed -- expanded, it plus the rail and the
+ * timeline leave almost no room for the planet being described -- so anything
+ * asserting on the stats, facts or composition has to open it first. On the
+ * desktop project it is already open and this is a no-op, which keeps the two
+ * projects running the same test rather than forking it by viewport.
+ */
+async function expandInspector(page: Page): Promise<void> {
+  const toggle = page.locator('.inspector__collapse');
+  await expect(toggle).toBeVisible();
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') {
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  }
+}
+
 test.describe('Orrery', () => {
   test('boots and renders a non-trivial scene', async ({ page }) => {
     const errors = await boot(page);
@@ -221,6 +239,7 @@ test.describe('Orrery', () => {
     page,
   }) => {
     await boot(page);
+    await expandInspector(page);
 
     await expect(page.locator('.inspector')).toContainText('How big');
 
@@ -294,6 +313,11 @@ test.describe('Orrery', () => {
   });
 
   test('is usable on a phone viewport @mobile', async ({ page }) => {
+    // Both projects run this one, and the desktop project's 1280px viewport is
+    // not a phone. Pin the size here so the test means the same thing in both,
+    // and the mobile project still contributes touch emulation and a real DPR.
+    await page.setViewportSize({ width: 390, height: 844 });
+
     await boot(page);
     await expect(page.locator('.body-rail')).toBeVisible();
     await expect(page.locator('.timeline')).toBeVisible();
@@ -305,5 +329,28 @@ test.describe('Orrery', () => {
         document.documentElement.clientWidth
     );
     expect(overflow).toBeLessThanOrEqual(1);
+
+    // The panel opens closed here, which is what keeps the stack short.
+    await expect(page.locator('.inspector__collapse')).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+
+    // The rail, the inspector and the timeline stack along the bottom edge,
+    // and every pixel they take is a pixel of planet you cannot see. They ran
+    // to 64% of a 390x844 screen before being compacted; this is the guard
+    // that keeps them from creeping back. Measured at 37% after.
+    const share = await page.evaluate(() => {
+      const boxes = ['.body-rail', '.inspector', '.timeline']
+        .map((s) => document.querySelector(s)?.getBoundingClientRect())
+        .filter((r): r is DOMRect => !!r);
+      const top = Math.min(...boxes.map((r) => r.top));
+      const bottom = Math.max(...boxes.map((r) => r.bottom));
+      return (bottom - top) / window.innerHeight;
+    });
+    expect(
+      share,
+      `HUD stack covered ${(share * 100).toFixed(1)}% of the screen`
+    ).toBeLessThan(0.45);
   });
 });
