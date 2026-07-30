@@ -19,6 +19,7 @@ import { KM_PER_UNIT } from '../sim/constants';
 import { useUIStore, type OverlayFlags } from '../state/uiStore';
 import { Live } from './Live';
 import { JogWheel } from './primitives/JogWheel';
+import { useCompactLayout } from './useCompactLayout';
 
 const SPRING = {
   type: 'spring' as const,
@@ -211,9 +212,8 @@ function Inspector() {
   const audience = useUIStore((s) => s.audience);
   // Collapsed by default on a phone. Expanded, the panel plus the rail and
   // timeline leave almost no room for the thing being described.
-  const [expanded, setExpanded] = useState(
-    () => typeof window === 'undefined' || window.innerWidth > 860
-  );
+  const compact = useCompactLayout();
+  const [expanded, setExpanded] = useState(!compact);
 
   const body = BODY_BY_ID[focused];
   if (!body) return null;
@@ -440,6 +440,7 @@ function Timeline() {
   const [speedIndex, setSpeedIndex] = useState(3);
   const scaleTarget = useUIStore((s) => s.scaleTarget);
   const setScaleTarget = useUIStore((s) => s.setScaleTarget);
+  const compact = useCompactLayout();
 
   const togglePlay = useCallback(() => {
     simClock.playing = !simClock.playing;
@@ -458,7 +459,9 @@ function Timeline() {
 
   return (
     <div className="timeline pointer-events-auto">
-      <JogWheel />
+      {/* The wheel is the tallest thing in this row, so it sets the height of
+          the whole bar. 52px still clears the 44px touch-target minimum. */}
+      <JogWheel size={compact ? 52 : 92} />
 
       <div className="timeline__readout">
         <div className="timeline__date">
