@@ -21,7 +21,15 @@ import { quality } from '../perf/QualityManager';
 import { simClock } from '../sim/SimClock';
 import type { DriverHandle } from './driverHandle';
 import { floatingOrigin } from '../sim/floatingOrigin';
-import { absPos, bodyIndex, distanceAU, obliquityRad, radii, spin, stepWorld } from '../sim/world';
+import {
+  absPos,
+  bodyIndex,
+  distanceAU,
+  obliquityRad,
+  radii,
+  spin,
+  stepWorld,
+} from '../sim/world';
 import { AU, KM_PER_UNIT, TAU, lightTimeSeconds } from '../sim/constants';
 import { uiState, useUIStore } from '../state/uiStore';
 import {
@@ -202,7 +210,8 @@ export function SceneDriver({ handle, labelLayer, onReady }: SceneDriverProps) {
       // Screen-space radius drives LOD, label visibility and culling.
       tmpA.copy(h.group.position).sub(perspective.position);
       const dist = tmpA.length();
-      const px = dist > 0 ? (radius / dist) * (viewportHeight / (2 * tanHalfFov)) : 1e9;
+      const px =
+        dist > 0 ? (radius / dist) * (viewportHeight / (2 * tanHalfFov)) : 1e9;
       h.screenRadius = px;
 
       const visible = px > 0.35;
@@ -212,10 +221,13 @@ export function SceneDriver({ handle, labelLayer, onReady }: SceneDriverProps) {
 
       if (h.mesh) {
         const detail =
-          px > 700 ? settings.maxGeometryDetail
-          : px > 180 ? Math.min(5, settings.maxGeometryDetail)
-          : px > 40 ? Math.min(4, settings.maxGeometryDetail)
-          : 3;
+          px > 700
+            ? settings.maxGeometryDetail
+            : px > 180
+              ? Math.min(5, settings.maxGeometryDetail)
+              : px > 40
+                ? Math.min(4, settings.maxGeometryDetail)
+                : 3;
         const geo = geometryForDetail(detail);
         if (h.mesh.geometry !== geo) h.mesh.geometry = geo;
       }
@@ -225,19 +237,38 @@ export function SceneDriver({ handle, labelLayer, onReady }: SceneDriverProps) {
     const focusRadius = radii[focusIdx] || 1;
     rig.minDistance = focusRadius * 1.04;
     rig.maxDistance = 6e6;
+
+    // On a phone the HUD fills the lower two thirds, so centring the subject in
+    // the canvas hides it behind the inspector. Lift it into the clear area.
+    rig.screenBias = size.width < 860 ? 0.16 : 0;
     rig.setTarget(
       absPos[focusIdx * 3] - floatingOrigin.origin[0],
       absPos[focusIdx * 3 + 1] - floatingOrigin.origin[1],
       absPos[focusIdx * 3 + 2] - floatingOrigin.origin[2]
     );
 
-    rig.mode = state.cameraMode === 'free' ? 'free' : 'orbit';
+    // Transition through enterFree/exitFree rather than assigning `mode`
+    // directly. Those seed the free-flight position and orientation from where
+    // the camera actually is; without them, entering free flight teleports you
+    // to the scene origin looking down -Z, because `freePosition` is still its
+    // initial zero.
+    const wantsFree = state.cameraMode === 'free';
+    if (wantsFree && rig.mode !== 'free') rig.enterFree(perspective);
+    else if (!wantsFree && rig.mode === 'free') rig.exitFree(perspective);
+
     if (rig.mode === 'free') {
       const thrust = readThrust();
       if (thrust.right || thrust.up || thrust.forward) {
-        // Scale speed to the focused body, so the same keypress is a gentle
-        // nudge near a moon and a real move at system scale.
-        const speed = Math.max(focusRadius * 6, rig.currentDistance * 1.2) * (thrust.boost ? 4 : 1);
+        // Scale speed to how far the camera actually is from what it is
+        // looking at, so the same keypress is a gentle nudge beside a moon and
+        // a real move at system scale. This has to be measured from the camera
+        // rather than read from `rig.currentDistance`: that is the orbit
+        // spring, which free mode never steps, so it would stay frozen at
+        // whatever it held on entry and flying outward would slow to a crawl.
+        tmpA.copy(perspective.position).sub(rig.target.asVector(tmpB));
+        const range = tmpA.length();
+        const speed =
+          Math.max(focusRadius * 6, range * 1.2) * (thrust.boost ? 4 : 1);
         rig.thrust(thrust.right, thrust.up, thrust.forward, dt, speed);
       }
     }
@@ -286,8 +317,9 @@ export function SceneDriver({ handle, labelLayer, onReady }: SceneDriverProps) {
           au > 0.01 ? Math.min(2.2, Math.max(0.45, Math.pow(1 / au, 0.55))) : 1;
       } else {
         // Star material.
-        (mat as { uniforms: Record<string, { value: number }> }).uniforms.uTime.value =
-          simClock.elapsed;
+        (
+          mat as { uniforms: Record<string, { value: number }> }
+        ).uniforms.uTime.value = simClock.elapsed;
       }
 
       if (h.atmosphere) {
@@ -296,7 +328,9 @@ export function SceneDriver({ handle, labelLayer, onReady }: SceneDriverProps) {
       if (h.atmosphereMaterial && h.mesh && state.overlays.atmospheres) {
         invMatrix.copy(h.mesh.matrixWorld).invert();
         tmpB.copy(sunScene).applyMatrix4(invMatrix).normalize();
-        (h.atmosphereMaterial.uniforms.uSunDirObject.value as Vector3).copy(tmpB);
+        (h.atmosphereMaterial.uniforms.uSunDirObject.value as Vector3).copy(
+          tmpB
+        );
       }
     }
 
@@ -307,7 +341,13 @@ export function SceneDriver({ handle, labelLayer, onReady }: SceneDriverProps) {
     telemetryAccumulator.current += dt;
     if (telemetryAccumulator.current >= TELEMETRY_INTERVAL) {
       telemetryAccumulator.current = 0;
-      publishFrameTelemetry(focusIdx, focusDef.name, rig.currentDistance, focusRadius, gl);
+      publishFrameTelemetry(
+        focusIdx,
+        focusDef.name,
+        rig.currentDistance,
+        focusRadius,
+        gl
+      );
     }
 
     if (!readyFired.current) {
@@ -385,7 +425,13 @@ function projectLabels(
     labelPos.copy(h.group.position).project(camera);
 
     // Behind the camera, or off screen.
-    if (labelPos.z > 1 || labelPos.x < -1.3 || labelPos.x > 1.3 || labelPos.y < -1.3 || labelPos.y > 1.3) {
+    if (
+      labelPos.z > 1 ||
+      labelPos.x < -1.3 ||
+      labelPos.x > 1.3 ||
+      labelPos.y < -1.3 ||
+      labelPos.y > 1.3
+    ) {
       if (el.style.opacity !== '0') el.style.opacity = '0';
       continue;
     }
@@ -399,7 +445,9 @@ function projectLabels(
     el.style.transform = `translate3d(${x.toFixed(1)}px, ${(y - offset).toFixed(1)}px, 0) translateX(-50%)`;
     // Fade out when the body is huge (you know what you're looking at) and
     // when it is tiny (the label would be noise).
-    const fade = smoothstep(0.8, 3, h.screenRadius) * (1 - smoothstep(400, 900, h.screenRadius) * 0.85);
+    const fade =
+      smoothstep(0.8, 3, h.screenRadius) *
+      (1 - smoothstep(400, 900, h.screenRadius) * 0.85);
     el.style.opacity = fade.toFixed(3);
   }
 }
@@ -409,7 +457,7 @@ function publishFrameTelemetry(
   focusName: string,
   cameraDistance: number,
   focusRadius: number,
-  gl: { info: { render: { calls: number; triangles: number } ; reset(): void } }
+  gl: { info: { render: { calls: number; triangles: number }; reset(): void } }
 ): void {
   const date = simClock.date;
   const sunDistUnits = distanceAU[focusIdx] * AU;
@@ -422,10 +470,13 @@ function publishFrameTelemetry(
     focusName,
     focusDistance: formatDistanceKm(cameraDistance * KM_PER_UNIT),
     focusAltitude: formatDistanceKm(altitude * KM_PER_UNIT),
-    sunDistance: sunDistUnits > 0 ? formatDistanceKm(sunDistUnits * KM_PER_UNIT) : '--',
-    lightTime: sunDistUnits > 0 ? formatLightTime(lightTimeSeconds(sunDistUnits)) : '--',
+    sunDistance:
+      sunDistUnits > 0 ? formatDistanceKm(sunDistUnits * KM_PER_UNIT) : '--',
+    lightTime:
+      sunDistUnits > 0 ? formatLightTime(lightTimeSeconds(sunDistUnits)) : '--',
     fps: quality.stats.fps > 0 ? quality.stats.fps.toFixed(0) : '--',
-    frameMs: quality.stats.p95 > 0 ? `${quality.stats.p95.toFixed(1)} ms` : '--',
+    frameMs:
+      quality.stats.p95 > 0 ? `${quality.stats.p95.toFixed(1)} ms` : '--',
     drawCalls: String(gl.info.render.calls),
     triangles: gl.info.render.triangles.toLocaleString(),
     tier: quality.tierName,

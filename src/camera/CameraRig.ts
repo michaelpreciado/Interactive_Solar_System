@@ -47,6 +47,16 @@ export class CameraRig implements Rebasable {
   /** Set true to collapse all springs to instant, for reduced motion. */
   instant = false;
 
+  /**
+   * Shift the focused body up the screen, as a fraction of viewport height.
+   *
+   * On a phone the HUD occupies the lower two thirds, so a subject centred in
+   * the canvas renders behind the inspector. This is a pure screen-space pan --
+   * the camera slides along its own up axis without re-aiming -- so the viewing
+   * angle, distance and terminator are all unchanged.
+   */
+  screenBias = 0;
+
   private readonly scratch = new Vector3();
   private readonly spherical = new Spherical();
   private unregister: () => void;
@@ -113,7 +123,11 @@ export class CameraRig implements Rebasable {
   /** Pointer drag in orbit mode. */
   orbitBy(deltaAzimuth: number, deltaPolar: number): void {
     this.azimuth.target = this.azimuth.target - deltaAzimuth;
-    this.polar.target = clamp(this.polar.target - deltaPolar, MIN_POLAR, MAX_POLAR);
+    this.polar.target = clamp(
+      this.polar.target - deltaPolar,
+      MIN_POLAR,
+      MAX_POLAR
+    );
     // Direct manipulation wants a tighter spring than a cinematic fly-to.
     this.azimuth.setHalfLife(0.12);
     this.polar.setHalfLife(0.12);
@@ -169,7 +183,13 @@ export class CameraRig implements Rebasable {
   }
 
   /** Free-flight thrust in camera-local axes. */
-  thrust(right: number, up: number, forward: number, dt: number, speed: number): void {
+  thrust(
+    right: number,
+    up: number,
+    forward: number,
+    dt: number,
+    speed: number
+  ): void {
     const cy = Math.cos(this.freeYaw);
     const sy = Math.sin(this.freeYaw);
     const cp = Math.cos(this.freePitch);
@@ -177,7 +197,10 @@ export class CameraRig implements Rebasable {
 
     const fwd = this.scratch.set(-sy * cp, sp, -cy * cp);
     this.freeVelocity.addScaledVector(fwd, forward * speed * dt);
-    this.freeVelocity.addScaledVector(this.scratch.set(cy, 0, -sy), right * speed * dt);
+    this.freeVelocity.addScaledVector(
+      this.scratch.set(cy, 0, -sy),
+      right * speed * dt
+    );
     this.freeVelocity.addScaledVector(UP, up * speed * dt);
   }
 
@@ -193,9 +216,7 @@ export class CameraRig implements Rebasable {
       const sy = Math.sin(this.freeYaw);
       const cp = Math.cos(this.freePitch);
       const sp = Math.sin(this.freePitch);
-      this.scratch
-        .set(-sy * cp, sp, -cy * cp)
-        .add(camera.position);
+      this.scratch.set(-sy * cp, sp, -cy * cp).add(camera.position);
       camera.up.copy(UP);
       camera.lookAt(this.scratch);
     } else {
@@ -211,10 +232,31 @@ export class CameraRig implements Rebasable {
         this.target.z.value + r * sinPhi * Math.cos(theta)
       );
       camera.up.copy(UP);
-      camera.lookAt(this.target.x.value, this.target.y.value, this.target.z.value);
+      camera.lookAt(
+        this.target.x.value,
+        this.target.y.value,
+        this.target.z.value
+      );
+      this.applyScreenBias(camera, r);
     }
 
     this.updateClipPlanes(camera);
+  }
+
+  /**
+   * Slide the camera along its own up axis so the target renders higher.
+   *
+   * Orientation is left alone, so this is a pan rather than a tilt. The world
+   * offset needed to move the image by a fraction `f` of viewport height is
+   * `2 f r tan(fov/2)`, where r is the distance to the target.
+   */
+  private applyScreenBias(camera: PerspectiveCamera, distance: number): void {
+    if (this.screenBias === 0) return;
+    const halfHeight = distance * Math.tan((camera.fov * Math.PI) / 360);
+    const shift = 2 * this.screenBias * halfHeight;
+    // Local up after lookAt, not world up: the camera is usually tilted.
+    this.scratch.set(0, 1, 0).applyQuaternion(camera.quaternion);
+    camera.position.addScaledVector(this.scratch, -shift);
   }
 
   /**

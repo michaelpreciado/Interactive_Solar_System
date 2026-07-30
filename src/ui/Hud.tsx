@@ -20,7 +20,12 @@ import { useUIStore, type OverlayFlags } from '../state/uiStore';
 import { Live } from './Live';
 import { JogWheel } from './primitives/JogWheel';
 
-const SPRING = { type: 'spring' as const, stiffness: 420, damping: 34, mass: 0.8 };
+const SPRING = {
+  type: 'spring' as const,
+  stiffness: 420,
+  damping: 34,
+  mass: 0.8,
+};
 
 export function Hud() {
   const focused = useUIStore((s) => s.focusedBody);
@@ -85,8 +90,20 @@ function TopBar() {
           onClick={() => togglePanel('layers')}
         >
           <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
-            <path d="M12 3 3 8l9 5 9-5-9-5Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-            <path d="m3 13 9 5 9-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+            <path
+              d="M12 3 3 8l9 5 9-5-9-5Z"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinejoin="round"
+            />
+            <path
+              d="m3 13 9 5 9-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinejoin="round"
+            />
           </svg>
         </IconButton>
         <IconButton
@@ -95,9 +112,21 @@ function TopBar() {
           onClick={() => togglePanel('settings')}
         >
           <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
-            <circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.6" />
-            <path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9 7 7m10 10 2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"
-              fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            <circle
+              cx="12"
+              cy="12"
+              r="3.2"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+            />
+            <path
+              d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9 7 7m10 10 2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
           </svg>
         </IconButton>
       </div>
@@ -180,7 +209,11 @@ function BodyRail() {
 function Inspector() {
   const focused = useUIStore((s) => s.focusedBody);
   const audience = useUIStore((s) => s.audience);
-  const [expanded, setExpanded] = useState(true);
+  // Collapsed by default on a phone. Expanded, the panel plus the rail and
+  // timeline leave almost no room for the thing being described.
+  const [expanded, setExpanded] = useState(
+    () => typeof window === 'undefined' || window.innerWidth > 860
+  );
 
   const body = BODY_BY_ID[focused];
   if (!body) return null;
@@ -198,7 +231,10 @@ function Inspector() {
           { label: 'Gravity', value: `${body.gravity} m/s²` },
           { label: 'Escape velocity', value: `${body.escapeVelocityKms} km/s` },
           { label: 'Mean temperature', value: `${body.meanTempK} K` },
-          { label: 'Sidereal day', value: `${num(Math.abs(body.rotationHours), 2)} h${body.rotationHours < 0 ? ' (retrograde)' : ''}` },
+          {
+            label: 'Sidereal day',
+            value: `${num(Math.abs(body.rotationHours), 2)} h${body.rotationHours < 0 ? ' (retrograde)' : ''}`,
+          },
           { label: 'Axial tilt', value: `${body.obliquityDeg}°` },
           { label: 'Bond albedo', value: body.albedo.toFixed(3) },
         ]
@@ -225,7 +261,8 @@ function Inspector() {
           {
             label: 'How tilted',
             value: `${body.obliquityDeg}°`,
-            hint: body.obliquityDeg > 90 ? 'It’s tipped right over!' : undefined,
+            hint:
+              body.obliquityDeg > 90 ? 'It’s tipped right over!' : undefined,
           },
         ];
 
@@ -249,9 +286,24 @@ function Inspector() {
           aria-expanded={expanded}
           aria-label={expanded ? 'Collapse details' : 'Expand details'}
         >
-          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"
-            style={{ transform: expanded ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform .25s' }}>
-            <path d="m6 14 6-6 6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            aria-hidden="true"
+            style={{
+              transform: expanded ? 'rotate(0deg)' : 'rotate(180deg)',
+              transition: 'transform .25s',
+            }}
+          >
+            <path
+              d="m6 14 6-6 6 6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
       </header>
@@ -259,15 +311,21 @@ function Inspector() {
       <dl className="inspector__live">
         <div>
           <dt>Distance to camera</dt>
-          <dd><Live field="focusDistance" /></dd>
+          <dd>
+            <Live field="focusDistance" />
+          </dd>
         </div>
         <div>
           <dt>Distance to Sun</dt>
-          <dd><Live field="sunDistance" /></dd>
+          <dd>
+            <Live field="sunDistance" />
+          </dd>
         </div>
         <div>
           <dt>Sunlight takes</dt>
-          <dd><Live field="lightTime" /></dd>
+          <dd>
+            <Live field="lightTime" />
+          </dd>
         </div>
       </dl>
 
@@ -303,10 +361,17 @@ function Inspector() {
             {body.composition.length > 0 && (
               <div className="composition">
                 <h2 className="composition__title">
-                  {audience === 'explorer' ? 'What it’s made of' : 'Atmospheric composition'}
+                  {audience === 'explorer'
+                    ? 'What it’s made of'
+                    : 'Atmospheric composition'}
                 </h2>
-                <div className="composition__bar" role="img"
-                  aria-label={body.composition.map((c) => `${c.label} ${(c.fraction * 100).toFixed(1)}%`).join(', ')}>
+                <div
+                  className="composition__bar"
+                  role="img"
+                  aria-label={body.composition
+                    .map((c) => `${c.label} ${(c.fraction * 100).toFixed(1)}%`)
+                    .join(', ')}
+                >
                   {body.composition.map((c, i) => (
                     <span
                       key={c.label}
@@ -320,9 +385,16 @@ function Inspector() {
                 <ul className="composition__legend">
                   {body.composition.map((c, i) => (
                     <li key={c.label}>
-                      <span style={{ opacity: 1 - i * 0.16 }} aria-hidden="true" />
+                      <span
+                        style={{ opacity: 1 - i * 0.16 }}
+                        aria-hidden="true"
+                      />
                       {c.label}
-                      <b>{c.fraction >= 0.001 ? `${(c.fraction * 100).toFixed(1)}%` : 'trace'}</b>
+                      <b>
+                        {c.fraction >= 0.001
+                          ? `${(c.fraction * 100).toFixed(1)}%`
+                          : 'trace'}
+                      </b>
                     </li>
                   ))}
                 </ul>
@@ -391,21 +463,44 @@ function Timeline() {
       <div className="timeline__readout">
         <div className="timeline__date">
           <Live field="date" />
-          <span className="timeline__clock"><Live field="time" /></span>
+          <span className="timeline__clock">
+            <Live field="time" />
+          </span>
         </div>
         <div className="timeline__meta">
           <Live field="speed" />
-          <span className="dot" aria-hidden="true">·</span>
+          <span className="dot" aria-hidden="true">
+            ·
+          </span>
           <Live field="accuracy" />
         </div>
       </div>
 
       <div className="timeline__controls">
-        <button className="play-button" onClick={togglePlay} aria-label={playing ? 'Pause' : 'Play'} aria-pressed={playing}>
+        <button
+          className="play-button"
+          onClick={togglePlay}
+          aria-label={playing ? 'Pause' : 'Play'}
+          aria-pressed={playing}
+        >
           {playing ? (
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-              <rect x="7" y="5" width="3.6" height="14" rx="1.2" fill="currentColor" />
-              <rect x="13.4" y="5" width="3.6" height="14" rx="1.2" fill="currentColor" />
+              <rect
+                x="7"
+                y="5"
+                width="3.6"
+                height="14"
+                rx="1.2"
+                fill="currentColor"
+              />
+              <rect
+                x="13.4"
+                y="5"
+                width="3.6"
+                height="14"
+                rx="1.2"
+                fill="currentColor"
+              />
             </svg>
           ) : (
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -414,15 +509,26 @@ function Timeline() {
           )}
         </button>
 
-        <button className="ghost-button" onClick={() => { simClock.toNow(); audio.select(); }}>
+        <button
+          className="ghost-button"
+          onClick={() => {
+            simClock.toNow();
+            audio.select();
+          }}
+        >
           Today
         </button>
 
         <label className="speed-select">
           <span className="visually-hidden">Time speed</span>
-          <select value={speedIndex} onChange={(e) => setSpeed(Number(e.target.value))}>
+          <select
+            value={speedIndex}
+            onChange={(e) => setSpeed(Number(e.target.value))}
+          >
             {SPEED_PRESETS.map((p, i) => (
-              <option key={p.label} value={i}>{p.label}</option>
+              <option key={p.label} value={i}>
+                {p.label}
+              </option>
             ))}
           </select>
         </label>
@@ -438,7 +544,13 @@ function Timeline() {
           value={scaleTarget}
           onChange={(e) => setScaleTarget(Number(e.target.value))}
           aria-label="Blend between a compressed view and true scale"
-          aria-valuetext={scaleTarget < 0.05 ? 'Compressed' : scaleTarget > 0.95 ? 'True scale' : `${Math.round(scaleTarget * 100)}% toward true scale`}
+          aria-valuetext={
+            scaleTarget < 0.05
+              ? 'Compressed'
+              : scaleTarget > 0.95
+                ? 'True scale'
+                : `${Math.round(scaleTarget * 100)}% toward true scale`
+          }
         />
         <span className="scale-morph__ends">
           <b>Easy to see</b>
@@ -456,7 +568,11 @@ function CameraModeToggle() {
   const setMode = useUIStore((s) => s.setCameraMode);
 
   return (
-    <div className="segmented segmented--compact" role="radiogroup" aria-label="Camera mode">
+    <div
+      className="segmented segmented--compact"
+      role="radiogroup"
+      aria-label="Camera mode"
+    >
       {(['orbit', 'free'] as const).map((m) => (
         <button
           key={m}
@@ -477,13 +593,31 @@ function CameraModeToggle() {
 
 // ------------------------------------------------------------------- panels
 
-const LAYER_LABELS: Record<keyof OverlayFlags, { title: string; hint: string }> = {
-  orbits: { title: 'Orbit paths', hint: 'The route each planet takes around the Sun' },
+const LAYER_LABELS: Record<
+  keyof OverlayFlags,
+  { title: string; hint: string }
+> = {
+  orbits: {
+    title: 'Orbit paths',
+    hint: 'The route each planet takes around the Sun',
+  },
   labels: { title: 'Name labels', hint: 'Floating names next to each world' },
-  asteroids: { title: 'Asteroid belt', hint: 'The rocky band between Mars and Jupiter' },
-  atmospheres: { title: 'Atmospheres', hint: 'The glowing edge of the air around a planet' },
-  habitableZone: { title: 'Habitable zone', hint: 'Where liquid water could exist' },
-  eclipticGrid: { title: 'Ecliptic grid', hint: 'The flat plane the planets orbit in' },
+  asteroids: {
+    title: 'Asteroid belt',
+    hint: 'The rocky band between Mars and Jupiter',
+  },
+  atmospheres: {
+    title: 'Atmospheres',
+    hint: 'The glowing edge of the air around a planet',
+  },
+  habitableZone: {
+    title: 'Habitable zone',
+    hint: 'Where liquid water could exist',
+  },
+  eclipticGrid: {
+    title: 'Ecliptic grid',
+    hint: 'The flat plane the planets orbit in',
+  },
 };
 
 function LayersPanel() {
@@ -502,7 +636,9 @@ function LayersPanel() {
               audio.select();
             }}
           />
-          <span className="switch-row__track" aria-hidden="true"><span /></span>
+          <span className="switch-row__track" aria-hidden="true">
+            <span />
+          </span>
           <span className="switch-row__text">
             <b>{LAYER_LABELS[key].title}</b>
             <em>{LAYER_LABELS[key].hint}</em>
@@ -556,7 +692,8 @@ function SettingsPanel() {
           ))}
         </div>
         <p className="field__hint">
-          Auto watches the frame rate and adjusts. Currently running <b>{tier}</b>.
+          Auto watches the frame rate and adjusts. Currently running{' '}
+          <b>{tier}</b>.
         </p>
       </div>
 
@@ -587,7 +724,9 @@ function SettingsPanel() {
             audio.setEnabled(e.target.checked);
           }}
         />
-        <span className="switch-row__track" aria-hidden="true"><span /></span>
+        <span className="switch-row__track" aria-hidden="true">
+          <span />
+        </span>
         <span className="switch-row__text">
           <b>Ambient sound</b>
           <em>A quiet drone that changes with each world</em>
@@ -619,14 +758,19 @@ function SettingsPanel() {
           checked={reducedMotion}
           onChange={(e) => setReducedMotion(e.target.checked)}
         />
-        <span className="switch-row__track" aria-hidden="true"><span /></span>
+        <span className="switch-row__track" aria-hidden="true">
+          <span />
+        </span>
         <span className="switch-row__text">
           <b>Reduce motion</b>
           <em>Camera moves jump straight to their destination</em>
         </span>
       </label>
 
-      <button className="ghost-button ghost-button--wide" onClick={toggleDebugHud}>
+      <button
+        className="ghost-button ghost-button--wide"
+        onClick={toggleDebugHud}
+      >
         Toggle performance overlay
       </button>
 
@@ -639,7 +783,13 @@ function SettingsPanel() {
   );
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+function Panel({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   const setPanel = useUIStore((s) => s.setPanel);
   return (
     <motion.div
@@ -653,9 +803,19 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
     >
       <header className="panel__head">
         <h2>{title}</h2>
-        <button className="panel__close" onClick={() => setPanel(null)} aria-label="Close">
+        <button
+          className="panel__close"
+          onClick={() => setPanel(null)}
+          aria-label="Close"
+        >
           <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-            <path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+            <path
+              d="m6 6 12 12M18 6 6 18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
       </header>

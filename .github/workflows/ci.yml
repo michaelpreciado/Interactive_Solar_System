@@ -70,8 +70,12 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
+      # Both projects. The mobile project re-runs the DOM-level tests at a
+      # Pixel 5 viewport -- without it, the test named "is usable on a phone
+      # viewport" only ever ran at 1280x720 and proved nothing about the
+      # responsive layout.
       - name: Run Playwright
-        run: npx playwright test --project=chromium
+        run: npx playwright test
         env:
           CI: 'true'
 

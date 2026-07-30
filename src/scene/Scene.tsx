@@ -118,7 +118,12 @@ export function Scene({ labelLayer, onBakeProgress }: SceneProps) {
       <ambientLight intensity={0.022} color="#5a6a8a" />
 
       {BODIES.map((body) => (
-        <Body key={body.id} def={body} scheduler={scheduler} labelLayer={labelLayer} />
+        <Body
+          key={body.id}
+          def={body}
+          scheduler={scheduler}
+          labelLayer={labelLayer}
+        />
       ))}
 
       <OrbitLines />
@@ -154,7 +159,10 @@ function Body({ def, scheduler, labelLayer }: BodyProps) {
   const atmosphereMaterial = useMemo(
     () =>
       def.atmosphere
-        ? new AtmosphereMaterial(def.atmosphere, quality.settings.atmosphereSteps)
+        ? new AtmosphereMaterial(
+            def.atmosphere,
+            quality.settings.atmosphereSteps
+          )
         : null,
     [def.atmosphere]
   );
@@ -170,7 +178,9 @@ function Body({ def, scheduler, labelLayer }: BodyProps) {
     if (existing) applyTextures(material, existing.albedo, existing.surface);
 
     return scheduler.onBaked((id, baked) => {
-      if (id === def.id) applyTextures(material, baked.albedo, baked.surface);
+      // A null bake means that body's shader failed; it keeps the placeholder.
+      if (id === def.id && baked)
+        applyTextures(material, baked.albedo, baked.surface);
     });
   }, [def.id, material, scheduler]);
 
@@ -286,7 +296,12 @@ function SaturnRings({ def }: { def: BodyDef }) {
     // the body's rendered radius.
     const inner = profile.innerKm / def.radiusKm;
     const outer = profile.outerKm / def.radiusKm;
-    const geo = buildRingGeometry(inner, outer, quality.settings.ringSegments, 6);
+    const geo = buildRingGeometry(
+      inner,
+      outer,
+      quality.settings.ringSegments,
+      6
+    );
     const mat = new RingMaterial(profile.texture, profile.width);
     mat.uniforms.uPolarRatio.value = 1 - def.flattening;
     return { geometry: geo, material: mat, profile };

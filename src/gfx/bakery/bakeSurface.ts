@@ -95,7 +95,11 @@ let quad: Mesh | null = null;
 let quadScene: Scene | null = null;
 let quadCamera: OrthographicCamera | null = null;
 
-function ensureQuad(): { scene: Scene; camera: OrthographicCamera; mesh: Mesh } {
+function ensureQuad(): {
+  scene: Scene;
+  camera: OrthographicCamera;
+  mesh: Mesh;
+} {
   if (!quad || !quadScene || !quadCamera) {
     const g = new BufferGeometry();
     // A single oversized triangle: fewer vertices than a quad and no diagonal
@@ -239,7 +243,10 @@ let placeholderSurface: Texture | null = null;
  * compile the program *without* that sampler, so the later swap to a real
  * texture silently does nothing and the planet renders flat forever.
  */
-function makePlaceholder(rgba: [number, number, number, number], srgb: boolean): Texture {
+function makePlaceholder(
+  rgba: [number, number, number, number],
+  srgb: boolean
+): Texture {
   const data = new Uint8Array(rgba);
   const faces: HTMLCanvasElement[] = [];
   for (let i = 0; i < 6; i++) {
@@ -264,8 +271,10 @@ function makePlaceholder(rgba: [number, number, number, number], srgb: boolean):
 }
 
 export function getPlaceholders(): { albedo: Texture; surface: Texture } {
-  if (!placeholderAlbedo) placeholderAlbedo = makePlaceholder([90, 90, 96, 255], true);
-  if (!placeholderSurface) placeholderSurface = makePlaceholder([128, 220, 0, 0], false);
+  if (!placeholderAlbedo)
+    placeholderAlbedo = makePlaceholder([90, 90, 96, 255], true);
+  if (!placeholderSurface)
+    placeholderSurface = makePlaceholder([128, 220, 0, 0], false);
   return { albedo: placeholderAlbedo, surface: placeholderSurface };
 }
 
@@ -287,7 +296,11 @@ interface QueueEntry {
 export class BakeScheduler {
   private queue: QueueEntry[] = [];
   private readonly results = new Map<string, BakedSurface>();
-  private readonly listeners = new Set<(id: string, baked: BakedSurface) => void>();
+  /** Bodies whose bake threw. They keep their placeholder texture. */
+  readonly failed = new Set<string>();
+  private readonly listeners = new Set<
+    (id: string, baked: BakedSurface | null) => void
+  >();
 
   constructor(
     private readonly renderer: WebGLRenderer,
@@ -318,7 +331,8 @@ export class BakeScheduler {
     return this.results.get(id);
   }
 
-  onBaked(fn: (id: string, baked: BakedSurface) => void): () => void {
+  /** `baked` is null when that body's bake failed. */
+  onBaked(fn: (id: string, baked: BakedSurface | null) => void): () => void {
     this.listeners.add(fn);
     return () => this.listeners.delete(fn);
   }
@@ -331,10 +345,29 @@ export class BakeScheduler {
       const entry = this.queue.shift()!;
       const body = BODY_BY_ID[entry.id];
       if (!body) continue;
-      const baked = bakeBody(this.renderer, body, entry.size);
-      this.results.set(entry.id, baked);
-      for (const fn of this.listeners) fn(entry.id, baked);
-    } while (this.queue.length > 0 && performance.now() - start < this.budgetMs);
+
+      try {
+        const baked = bakeBody(this.renderer, body, entry.size);
+        this.results.set(entry.id, baked);
+        for (const fn of this.listeners) fn(entry.id, baked);
+      } catch (error) {
+        // A bake can fail on an unusual driver, on a lost context, or when the
+        // GPU is out of memory. Letting it throw would escape the rAF pump and
+        // stall the queue: progress would never reach 1 and the loading screen
+        // would sit there forever with a spinner and no explanation. Far better
+        // to lose one body's detail -- it keeps its placeholder texture -- and
+        // let everything else through.
+        console.error(
+          `Surface bake failed for "${entry.id}"; using placeholder.`,
+          error
+        );
+        this.failed.add(entry.id);
+        for (const fn of this.listeners) fn(entry.id, null);
+      }
+    } while (
+      this.queue.length > 0 &&
+      performance.now() - start < this.budgetMs
+    );
   }
 
   /** Drain the entire queue immediately. Used by tests and by the intro. */

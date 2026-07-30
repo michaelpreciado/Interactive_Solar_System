@@ -69,7 +69,8 @@ export class Spring {
 
   get settled(): boolean {
     return (
-      Math.abs(this.target - this.value) < 1e-4 && Math.abs(this.velocity) < 1e-4
+      Math.abs(this.target - this.value) < 1e-4 &&
+      Math.abs(this.velocity) < 1e-4
     );
   }
 }
@@ -108,6 +109,11 @@ export class Spring3 {
     this.x.step(dt);
     this.y.step(dt);
     this.z.step(dt);
+  }
+
+  /** Write the current value into an existing vector, avoiding allocation. */
+  asVector<T extends { set(x: number, y: number, z: number): T }>(out: T): T {
+    return out.set(this.x.value, this.y.value, this.z.value);
   }
 
   /** Shift by a delta without disturbing the spring state -- floating origin. */
