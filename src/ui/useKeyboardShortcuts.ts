@@ -56,8 +56,9 @@ export function useKeyboardShortcuts(handle: DriverHandle) {
           store.toggleOverlay('labels');
           break;
         case 'f':
+          // The driver reads cameraMode each frame, so this is the only write
+          // needed -- setting rig.mode here too would race with it.
           store.setCameraMode(store.cameraMode === 'free' ? 'orbit' : 'free');
-          handle.rig.mode = store.cameraMode === 'free' ? 'orbit' : 'free';
           break;
         case 't':
           store.setScaleTarget(store.scaleTarget > 0.5 ? 0 : 1);

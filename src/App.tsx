@@ -85,12 +85,7 @@ export default function App() {
           powerPreference: 'high-performance',
           stencil: false,
           depth: true,
-          // Normally false: keeping the drawing buffer costs memory and can
-          // cost a copy. `?probe=1` enables it so tests can read pixels back
-          // and assert the scene actually rendered.
-          preserveDrawingBuffer:
-            typeof location !== 'undefined' &&
-            new URLSearchParams(location.search).has('probe'),
+          preserveDrawingBuffer: false,
         }}
         camera={{ fov: 55, near: 0.1, far: 1e7, position: [0, 220, 620] }}
         onCreated={({ gl }) => {
@@ -111,7 +106,7 @@ export default function App() {
           writes from the driver -- no React involvement per frame. */}
       <div ref={labelLayer} className="label-layer" aria-hidden="true" />
 
-      <Hud handle={handle} />
+      <Hud />
       <DebugHud />
       <LoadingScreen progress={bakeProgress} ready={ready} />
     </div>

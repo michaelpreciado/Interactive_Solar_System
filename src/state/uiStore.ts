@@ -24,10 +24,8 @@ export type PanelId =
 export interface OverlayFlags {
   orbits: boolean;
   labels: boolean;
-  trails: boolean;
   asteroids: boolean;
   atmospheres: boolean;
-  lightTime: boolean;
   habitableZone: boolean;
   eclipticGrid: boolean;
 }
@@ -105,10 +103,8 @@ const saved = loadPrefs();
 const DEFAULT_OVERLAYS: OverlayFlags = {
   orbits: true,
   labels: true,
-  trails: false,
   asteroids: true,
   atmospheres: true,
-  lightTime: false,
   habitableZone: false,
   eclipticGrid: false,
 };

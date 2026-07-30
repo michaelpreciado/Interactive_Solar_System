@@ -66,22 +66,32 @@ async function boot(page: Page, query = '?tier=high'): Promise<string[]> {
 
 test.describe('Orrery', () => {
   test('boots and renders a non-trivial scene', async ({ page }) => {
-    // `probe` keeps the drawing buffer so it can be read back below.
-    const errors = await boot(page, '?tier=high&probe=1');
+    const errors = await boot(page);
 
     await expect(page).toHaveTitle(/Orrery/);
     await expect(page.locator('canvas')).toBeVisible();
 
-    // Read the framebuffer back and assert it contains actual imagery: not
-    // uniformly black (nothing drew) and not uniformly one colour (a shader
-    // fell back to a flat fill).
-    const stats = await page.evaluate(() => {
-      const canvas = document.querySelector('canvas') as HTMLCanvasElement;
+    // Analyse a real screenshot rather than reading the WebGL canvas back
+    // directly: without `preserveDrawingBuffer` the drawing buffer is already
+    // cleared by the time script runs, so `drawImage` yields solid black and
+    // the test would pass or fail for reasons unrelated to the render.
+    //
+    // Only the left portion is sampled, away from the HUD panels, so the
+    // assertion is about the 3D scene rather than about the interface.
+    const shot = await page.screenshot({
+      clip: { x: 0, y: 60, width: 640, height: 620 },
+    });
+
+    const stats = await page.evaluate(async (base64: string) => {
+      const img = new Image();
+      img.src = `data:image/png;base64,${base64}`;
+      await img.decode();
+
       const copy = document.createElement('canvas');
-      copy.width = canvas.width;
-      copy.height = canvas.height;
+      copy.width = img.width;
+      copy.height = img.height;
       const ctx = copy.getContext('2d')!;
-      ctx.drawImage(canvas, 0, 0);
+      ctx.drawImage(img, 0, 0);
       const { data } = ctx.getImageData(0, 0, copy.width, copy.height);
 
       let sum = 0;
@@ -91,11 +101,11 @@ test.describe('Orrery', () => {
         const lum = (data[i] * 299 + data[i + 1] * 587 + data[i + 2] * 114) / 1000;
         sum += lum;
         if (lum > max) max = lum;
-        // Quantise so noise doesn't inflate the count.
-        seen.add((data[i] >> 4) << 8 | (data[i + 1] >> 4) << 4 | data[i + 2] >> 4);
+        // Quantise so sensor-style noise doesn't inflate the count.
+        seen.add(((data[i] >> 4) << 8) | ((data[i + 1] >> 4) << 4) | (data[i + 2] >> 4));
       }
       return { mean: sum / (data.length / 4), max, distinctColors: seen.size };
-    });
+    }, shot.toString('base64'));
 
     expect(stats.max, 'the scene rendered something bright').toBeGreaterThan(40);
     expect(stats.mean, 'the scene is not a white-out').toBeLessThan(200);

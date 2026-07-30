@@ -36,6 +36,7 @@ import { bakeStarfield } from '../gfx/bakery/bakeStars';
 import { quality } from '../perf/QualityManager';
 import { registerBody, type BodyHandles } from './registry';
 import { OrbitLines } from './OrbitLines';
+import { Overlays } from './Overlays';
 import { KM_PER_UNIT } from '../sim/constants';
 
 /** Bake priority: what the user sees first, first. */
@@ -121,6 +122,7 @@ export function Scene({ labelLayer, onBakeProgress }: SceneProps) {
       ))}
 
       <OrbitLines />
+      <Overlays />
     </>
   );
 }
@@ -135,6 +137,7 @@ function Body({ def, scheduler, labelLayer }: BodyProps) {
   const groupRef = useRef<Group>(null);
   const spinRef = useRef<Object3D>(null);
   const meshRef = useRef<Mesh>(null);
+  const atmosphereRef = useRef<Mesh>(null);
 
   const isStar = def.archetype === 'star';
 
@@ -190,6 +193,7 @@ function Body({ def, scheduler, labelLayer }: BodyProps) {
       spinGroup,
       mesh: meshRef.current ?? undefined,
       material,
+      atmosphere: atmosphereRef.current ?? undefined,
       atmosphereMaterial: atmosphereMaterial ?? undefined,
       label,
       active: true,
@@ -229,6 +233,7 @@ function Body({ def, scheduler, labelLayer }: BodyProps) {
 
         {def.atmosphere && atmosphereMaterial && (
           <mesh
+            ref={atmosphereRef}
             geometry={geometry}
             material={atmosphereMaterial}
             scale={1 + def.atmosphere.heightFraction}

@@ -35,6 +35,7 @@ import {
 import { allBodies, type BodyHandles } from './registry';
 import { setOrbitMorph } from './orbitMorph';
 import { geometryForDetail } from '../gfx/geometry/icospheres';
+import { attachFreeFlightInput, readThrust } from '../camera/freeFlightInput';
 
 const TELEMETRY_INTERVAL = 0.1;
 
@@ -124,6 +125,8 @@ export function SceneDriver({ handle, labelLayer, onReady }: SceneDriverProps) {
       unsubFocus();
     };
   }, [rig, scaleMorph]);
+
+  useEffect(() => attachFreeFlightInput(), []);
 
   // `renderer.info` resets on every `render()`. We only render once per frame
   // today, but the bake passes also call render, so autoReset would zero the
@@ -219,7 +222,7 @@ export function SceneDriver({ handle, labelLayer, onReady }: SceneDriverProps) {
     }
 
     // ---- camera ----------------------------------------------------------
-    const focusRadius = radii[focusIdx];
+    const focusRadius = radii[focusIdx] || 1;
     rig.minDistance = focusRadius * 1.04;
     rig.maxDistance = 6e6;
     rig.setTarget(
@@ -227,6 +230,18 @@ export function SceneDriver({ handle, labelLayer, onReady }: SceneDriverProps) {
       absPos[focusIdx * 3 + 1] - floatingOrigin.origin[1],
       absPos[focusIdx * 3 + 2] - floatingOrigin.origin[2]
     );
+
+    rig.mode = state.cameraMode === 'free' ? 'free' : 'orbit';
+    if (rig.mode === 'free') {
+      const thrust = readThrust();
+      if (thrust.right || thrust.up || thrust.forward) {
+        // Scale speed to the focused body, so the same keypress is a gentle
+        // nudge near a moon and a real move at system scale.
+        const speed = Math.max(focusRadius * 6, rig.currentDistance * 1.2) * (thrust.boost ? 4 : 1);
+        rig.thrust(thrust.right, thrust.up, thrust.forward, dt, speed);
+      }
+    }
+
     rig.update(dt, perspective);
 
     // ---- shader uniforms -------------------------------------------------
@@ -275,7 +290,10 @@ export function SceneDriver({ handle, labelLayer, onReady }: SceneDriverProps) {
           simClock.elapsed;
       }
 
-      if (h.atmosphereMaterial && h.mesh) {
+      if (h.atmosphere) {
+        h.atmosphere.visible = state.overlays.atmospheres;
+      }
+      if (h.atmosphereMaterial && h.mesh && state.overlays.atmospheres) {
         invMatrix.copy(h.mesh.matrixWorld).invert();
         tmpB.copy(sunScene).applyMatrix4(invMatrix).normalize();
         (h.atmosphereMaterial.uniforms.uSunDirObject.value as Vector3).copy(tmpB);

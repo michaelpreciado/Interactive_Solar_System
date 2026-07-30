@@ -16,7 +16,7 @@
 import { Bloom, ChromaticAberration, EffectComposer, Noise, SMAA, ToneMapping, Vignette } from '@react-three/postprocessing';
 import { BlendFunction, KernelSize, ToneMappingMode } from 'postprocessing';
 import { useEffect, useState } from 'react';
-import { Vector2 } from 'three';
+import { HalfFloatType, Vector2 } from 'three';
 
 import { quality } from '../perf/QualityManager';
 import type { QualitySettings } from '../perf/tiers';
@@ -37,8 +37,10 @@ export function Composer() {
   return (
     <EffectComposer
       multisampling={settings.msaa}
-      // HDR throughout. Without this the Sun clips to white before bloom sees it.
-      frameBufferType={undefined}
+      // HDR throughout. If the buffer were 8-bit the Sun would clip to white
+      // before the bloom threshold ever saw it, and "selective" bloom would
+      // become "everything blooms a little".
+      frameBufferType={HalfFloatType}
     >
       <Bloom
         intensity={1.15}

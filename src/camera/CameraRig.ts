@@ -133,16 +133,17 @@ export class CameraRig implements Rebasable {
     this.mode = 'free';
     this.freePosition.copy(camera.position);
     this.freeVelocity.set(0, 0, 0);
-    // Seed the free-flight orientation from wherever the camera already looks,
-    // so switching modes never snaps the view.
-    const dir = this.scratch.copy(this.target.x.value === 0 && this.target.y.value === 0
-      ? new Vector3(0, 0, -1)
-      : new Vector3(
-          this.target.x.value - camera.position.x,
-          this.target.y.value - camera.position.y,
-          this.target.z.value - camera.position.z
-        )
-    ).normalize();
+
+    // Seed the free-flight orientation from where the camera already looks, so
+    // switching modes never snaps the view.
+    const dir = this.scratch.set(
+      this.target.x.value - camera.position.x,
+      this.target.y.value - camera.position.y,
+      this.target.z.value - camera.position.z
+    );
+    if (dir.lengthSq() < 1e-12) dir.set(0, 0, -1);
+    dir.normalize();
+
     this.freeYaw = Math.atan2(-dir.x, -dir.z);
     this.freePitch = Math.asin(clamp(dir.y, -1, 1));
   }

@@ -19,11 +19,10 @@ import { KM_PER_UNIT } from '../sim/constants';
 import { useUIStore, type OverlayFlags } from '../state/uiStore';
 import { Live } from './Live';
 import { JogWheel } from './primitives/JogWheel';
-import type { DriverHandle } from '../scene/driverHandle';
 
 const SPRING = { type: 'spring' as const, stiffness: 420, damping: 34, mass: 0.8 };
 
-export function Hud({ handle }: { handle: DriverHandle }) {
+export function Hud() {
   const focused = useUIStore((s) => s.focusedBody);
   const accent = BODY_BY_ID[focused]?.accent ?? '#6ea8ff';
 
@@ -42,7 +41,7 @@ export function Hud({ handle }: { handle: DriverHandle }) {
       <TopBar />
       <BodyRail />
       <Inspector />
-      <Timeline handle={handle} />
+      <Timeline />
     </div>
   );
 }
@@ -364,7 +363,7 @@ function dayLength(hours: number): string {
 
 // ----------------------------------------------------------------- timeline
 
-function Timeline({ handle }: { handle: DriverHandle }) {
+function Timeline() {
   const [playing, setPlaying] = useState(simClock.playing);
   const [speedIndex, setSpeedIndex] = useState(3);
   const scaleTarget = useUIStore((s) => s.scaleTarget);
@@ -447,14 +446,12 @@ function Timeline({ handle }: { handle: DriverHandle }) {
         </span>
       </div>
 
-      {/* Kept mounted so the handle prop is genuinely used and the camera mode
-          toggle sits with the other motion controls. */}
-      <CameraModeToggle handle={handle} />
+      <CameraModeToggle />
     </div>
   );
 }
 
-function CameraModeToggle({ handle }: { handle: DriverHandle }) {
+function CameraModeToggle() {
   const mode = useUIStore((s) => s.cameraMode);
   const setMode = useUIStore((s) => s.setCameraMode);
 
@@ -468,7 +465,6 @@ function CameraModeToggle({ handle }: { handle: DriverHandle }) {
           className={`segmented__item${mode === m ? ' is-active' : ''}`}
           onClick={() => {
             setMode(m);
-            handle.rig.mode = m;
             audio.select();
           }}
         >
@@ -484,10 +480,8 @@ function CameraModeToggle({ handle }: { handle: DriverHandle }) {
 const LAYER_LABELS: Record<keyof OverlayFlags, { title: string; hint: string }> = {
   orbits: { title: 'Orbit paths', hint: 'The route each planet takes around the Sun' },
   labels: { title: 'Name labels', hint: 'Floating names next to each world' },
-  trails: { title: 'Motion trails', hint: 'Where each planet has just been' },
   asteroids: { title: 'Asteroid belt', hint: 'The rocky band between Mars and Jupiter' },
   atmospheres: { title: 'Atmospheres', hint: 'The glowing edge of the air around a planet' },
-  lightTime: { title: 'Light delay', hint: 'How long sunlight takes to arrive' },
   habitableZone: { title: 'Habitable zone', hint: 'Where liquid water could exist' },
   eclipticGrid: { title: 'Ecliptic grid', hint: 'The flat plane the planets orbit in' },
 };
