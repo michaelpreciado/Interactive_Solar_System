@@ -55,11 +55,15 @@ async function boot(page: Page, query = '?tier=high'): Promise<string[]> {
   page.on('requestfailed', (r) => {
     // Ignore aborted requests from navigation; only real misses matter.
     const err = r.failure()?.errorText ?? '';
-    if (!err.includes('ABORTED')) errors.push(`request failed: ${r.url()} ${err}`);
+    if (!err.includes('ABORTED'))
+      errors.push(`request failed: ${r.url()} ${err}`);
   });
 
   await page.goto(`/${query}`);
-  await page.waitForSelector('.loading', { state: 'detached', timeout: READY_TIMEOUT });
+  await page.waitForSelector('.loading', {
+    state: 'detached',
+    timeout: READY_TIMEOUT,
+  });
   await page.waitForTimeout(2500);
   return errors;
 }
@@ -98,25 +102,35 @@ test.describe('Orrery', () => {
       let max = 0;
       const seen = new Set<number>();
       for (let i = 0; i < data.length; i += 4) {
-        const lum = (data[i] * 299 + data[i + 1] * 587 + data[i + 2] * 114) / 1000;
+        const lum =
+          (data[i] * 299 + data[i + 1] * 587 + data[i + 2] * 114) / 1000;
         sum += lum;
         if (lum > max) max = lum;
         // Quantise so sensor-style noise doesn't inflate the count.
-        seen.add(((data[i] >> 4) << 8) | ((data[i + 1] >> 4) << 4) | (data[i + 2] >> 4));
+        seen.add(
+          ((data[i] >> 4) << 8) | ((data[i + 1] >> 4) << 4) | (data[i + 2] >> 4)
+        );
       }
       return { mean: sum / (data.length / 4), max, distinctColors: seen.size };
     }, shot.toString('base64'));
 
-    expect(stats.max, 'the scene rendered something bright').toBeGreaterThan(40);
+    expect(stats.max, 'the scene rendered something bright').toBeGreaterThan(
+      40
+    );
     expect(stats.mean, 'the scene is not a white-out').toBeLessThan(200);
-    expect(stats.distinctColors, 'the scene has real tonal range').toBeGreaterThan(60);
+    expect(
+      stats.distinctColors,
+      'the scene has real tonal range'
+    ).toBeGreaterThan(60);
 
     const shaderErrors = errors.filter((e) => /shader|GLSL|program/i.test(e));
     expect(shaderErrors, 'no shader compile failures').toEqual([]);
     expect(errors, 'clean console').toEqual([]);
   });
 
-  test('does not re-render React while the simulation runs', async ({ page }) => {
+  test('does not re-render React while the simulation runs', async ({
+    page,
+  }) => {
     await boot(page);
 
     // Count DOM mutations to the 3D-adjacent tree over three seconds of
@@ -130,7 +144,10 @@ test.describe('Orrery', () => {
       let structural = 0;
       const obs = new MutationObserver((records) => {
         for (const r of records) {
-          if (r.type === 'childList' && (r.addedNodes.length || r.removedNodes.length)) {
+          if (
+            r.type === 'childList' &&
+            (r.addedNodes.length || r.removedNodes.length)
+          ) {
             structural++;
           }
         }
@@ -152,7 +169,9 @@ test.describe('Orrery', () => {
 
     // Saturn is the heaviest view: planet, rings, atmosphere shell and moons.
     await page.click('.body-chip:has-text("Saturn")');
-    await waitUntilStable(() => page.locator('.inspector__live dd').nth(0).textContent());
+    await waitUntilStable(() =>
+      page.locator('.inspector__live dd').nth(0).textContent()
+    );
 
     // The performance overlay reads from the telemetry channel.
     await page.keyboard.press('`');
@@ -160,7 +179,9 @@ test.describe('Orrery', () => {
     await page.waitForTimeout(1500);
 
     const hud = (await page.locator('.debug-hud').textContent()) ?? '';
-    const calls = Number(/Draw calls([\d,]+)/.exec(hud)?.[1]?.replace(/,/g, '') ?? '0');
+    const calls = Number(
+      /Draw calls([\d,]+)/.exec(hud)?.[1]?.replace(/,/g, '') ?? '0'
+    );
 
     expect(calls, 'renderer reported draw calls').toBeGreaterThan(0);
     // A regression past this means something started drawing per-object that
@@ -177,7 +198,9 @@ test.describe('Orrery', () => {
     // Light-travel time to Jupiter is 35-52 minutes depending on where the two
     // planets are. Anything outside that means the ephemeris or the unit
     // conversion is wrong.
-    const light = plain(await page.locator('.inspector__live dd').nth(2).textContent());
+    const light = plain(
+      await page.locator('.inspector__live dd').nth(2).textContent()
+    );
     const minutes = Number(/([\d.]+)/.exec(light)?.[1] ?? '0');
     expect(light).toContain('minutes');
     expect(minutes).toBeGreaterThan(30);
@@ -194,7 +217,9 @@ test.describe('Orrery', () => {
     expect(km).toBeLessThan(45);
   });
 
-  test('switches between explorer and scientist voices @dom', async ({ page }) => {
+  test('switches between explorer and scientist voices @dom', async ({
+    page,
+  }) => {
     await boot(page);
 
     await expect(page.locator('.inspector')).toContainText('How big');
@@ -217,10 +242,11 @@ test.describe('Orrery', () => {
     // Labels off should hide every label.
     await page.click('.switch-row:has-text("Name labels")');
     await page.waitForTimeout(1200);
-    const visible = await page.evaluate(() =>
-      [...document.querySelectorAll<HTMLElement>('.body-label')].filter(
-        (el) => Number(el.style.opacity || '0') > 0.01
-      ).length
+    const visible = await page.evaluate(
+      () =>
+        [...document.querySelectorAll<HTMLElement>('.body-label')].filter(
+          (el) => Number(el.style.opacity || '0') > 0.01
+        ).length
     );
     expect(visible).toBe(0);
 
@@ -231,7 +257,12 @@ test.describe('Orrery', () => {
   test('scrubs time and returns to today @dom', async ({ page }) => {
     await boot(page);
 
-    const readDate = async () => plain(await page.locator('.timeline__date').textContent());
+    // `.timeline__date` holds the date *and* the UTC clock. Reading the whole
+    // container makes the assertion depend on wall-clock time: "Today" resets
+    // to `new Date()`, and a CI run takes long enough that the minute has
+    // moved on even though the date has not.
+    const readDate = async () =>
+      plain(await page.locator('.timeline__date > span').first().textContent());
     const before = await readDate();
 
     // Keys go to the document; clicking the canvas first is unnecessary and
@@ -269,7 +300,9 @@ test.describe('Orrery', () => {
 
     // The HUD must not push the page into horizontal scroll.
     const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+      () =>
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth
     );
     expect(overflow).toBeLessThanOrEqual(1);
   });

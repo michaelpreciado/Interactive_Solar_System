@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  # `push` on the default branch only. Matching all branches would double every
+  # run for any branch with an open PR, since `pull_request` already covers it.
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
 
 concurrency:
@@ -18,7 +20,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - run: npm ci
@@ -54,7 +56,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - run: npm ci
