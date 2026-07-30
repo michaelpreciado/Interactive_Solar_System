@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="58%"><stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#04050a"/></radialGradient>
+    <radialGradient id="sun" cx="38%" cy="34%"><stop offset="0" stop-color="#fff8e6"/><stop offset="55%" stop-color="#ffb648"/><stop offset="100%" stop-color="#ff7a18"/></radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <ellipse cx="600" cy="330" rx="470" ry="150" fill="none" stroke="#6ea8ff" stroke-opacity=".22" stroke-width="2"/>
+  <ellipse cx="600" cy="330" rx="330" ry="105" fill="none" stroke="#e2703a" stroke-opacity=".22" stroke-width="2"/>
+  <ellipse cx="600" cy="330" rx="200" ry="64" fill="none" stroke="#5aa9e6" stroke-opacity=".3" stroke-width="2"/>
+  <circle cx="600" cy="330" r="66" fill="url(#sun)"/>
+  <circle cx="800" cy="330" r="13" fill="#5aa9e6"/>
+  <circle cx="270" cy="330" r="20" fill="#d8a06a"/>
+  <text x="600" y="140" fill="#f2f5fa" font-family="Inter,system-ui,sans-serif" font-size="62" font-weight="700" letter-spacing="14" text-anchor="middle">ORRERY</text>
+  <text x="600" y="185" fill="#a9b4c6" font-family="Inter,system-ui,sans-serif" font-size="23" text-anchor="middle">Real orbits · Real scale · Procedurally rendered</text>
+</svg>

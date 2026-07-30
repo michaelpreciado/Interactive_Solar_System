@@ -1,99 +1,142 @@
-# Interactive Solar System
+# Orrery
 
-Interactive 3D solar system built with React, TypeScript, and Three.js. The project focuses on responsive exploration, educational overlays, and a richer learning experience than a simple planet viewer.
-
-## Features
-
-- Real-time 3D solar system visualization
-- Educational panels and fact displays
-- Time controls and orbital exploration
-- Responsive UI for desktop and mobile
-- TypeScript-based frontend architecture
-- Included test and Docker scaffolding
-
-## Tech Stack
-
-- React
-- TypeScript
-- Vite
-- Three.js
-- React Three Fiber / Drei
-- Zustand
-- Vitest
-- Playwright
-- Docker
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+
-- npm 10+
-
-### Local development
+An interactive solar system you can fly through. Real orbits, real scale, and
+every planetary surface generated on your GPU at load — there is not a single
+image file in the build.
 
 ```bash
 npm install
 npm run dev
 ```
 
-### Production build
+---
+
+## What it is
+
+Nine worlds plus the Sun, Pluto and a dozen major moons, propagated from
+[JPL/Standish Keplerian elements][jpl] with secular rates. Click any body and the
+camera flies to it. Drag to orbit, scroll to zoom, drag the scale slider to watch
+the comfortable "textbook" spacing morph into the real, terrifying distances.
+
+Two voices for everything: **Explorer** is written for a curious child, and
+**Scientist** swaps in real units, orbital elements and mechanisms. The mode
+changes the words and the numbers, never the layout.
+
+[jpl]: https://ssd.jpl.nasa.gov/planets/approx_pos.html
+
+## Three decisions that shaped it
+
+**Every surface is procedural.** No textures are downloaded or bundled. At load,
+each body's surface is rendered once into a cube map by an archetype shader —
+rocky, terran, gas giant, ice giant, ice moon, volcanic, star — and then sampled
+as an ordinary texture. Six-plus octaves of warped 3D noise per fragment is fine
+on a desktop GPU and a hard failure on a phone; doing it once costs a few frames
+and buys two texture fetches per pixel forever after.
+
+The thing that makes it read as *those* planets rather than as procedural mush is
+that the landmarks are **hand-placed analytic primitives at their real
+coordinates**, with noise only as connective tissue. The Great Red Spot is an
+ellipse at 22°S whose sampling domain rotates with distance from its centre, so
+it shears like a vortex. Valles Marineris is a polyline across Mars's equator.
+The Cassini division is at 117,580–122,170 km because that is where it is.
+
+**React never renders during animation.** The simulation is a plain-TypeScript
+layer that mutates `Object3D`s from a single `useFrame`. `SimClock` deliberately
+ships no React binding at all, so there is no hook to reach for — anything the
+interface needs to display goes through a 10 Hz channel that writes
+`textContent` directly. A live distance readout costs zero React commits.
+
+**Nothing about the lighting uses a scene light.** One shared `DirectionalLight`
+cannot light a 30 AU scene: its direction is only right for one body at a time.
+Instead each material derives the sun direction in its own object space, with a
+terminator whose softness comes from the Sun's actual angular radius at that
+distance (half a degree from Earth, twenty arcseconds from Neptune). Ring
+shadows are analytic too — one ray-plane intersection and a 1-D texture fetch,
+which gives a razor-sharp Cassini-division shadow at any zoom that no shadow map
+could manage.
+
+## Controls
+
+| | |
+| --- | --- |
+| Drag | Orbit |
+| Scroll / pinch | Zoom |
+| Click a body | Fly to it |
+| `Space` | Play / pause time |
+| `←` `→` | Step a day (hold `Shift` for a month) |
+| `[` `]` | Previous / next world |
+| `0`–`9` | Jump to a world |
+| `T` | Toggle true scale |
+| `O` / `L` | Orbit paths / labels |
+| `F` | Free flight |
+| `H` | Back to today |
+| `` ` `` | Performance overlay |
+
+## Accuracy
+
+Positions come from Standish's approximate Keplerian elements with per-century
+secular rates. They are good to roughly an arcminute between **1800 and 2050**;
+outside that window the date readout is marked *Extrapolated* rather than
+quietly presenting extrapolation as fact.
+
+Body radii, masses, rotation periods, obliquities and compositions are real. The
+*displayed* sizes and orbital distances are not — at true scale Mercury sits
+inside the Sun's disc and Neptune is off screen. The scale slider interpolates
+continuously between the artistic layout and the real one, so you can see exactly
+how much is being cheated.
+
+## Performance
+
+The target is 120 fps on a desktop GPU and 60 on a mid-range phone, held by an
+adaptive controller that watches the **p95** frame time (not the mean — a mean
+hides exactly the hitches you notice) and steps quality up and down with
+hysteresis: DPR first, then post-processing, then geometry detail, then instance
+counts. Press `` ` `` to watch it work.
+
+> **What has and has not been measured.** The visual results here were verified
+> by rendering in headless Chromium, which uses SwiftShader — software
+> rasterisation. Every shader is confirmed to compile and produce the intended
+> image, and the structural budgets (draw calls, zero React commits per frame,
+> zero allocation in the frame loop) are asserted in the test suite. Absolute
+> frame rate on real GPU hardware is **not** measured here; check it yourself
+> with the performance overlay.
+
+## Development
 
 ```bash
-npm run build
-```
-
-### Quality checks
-
-```bash
+npm run dev          # dev server
+npm run build        # typecheck + production build
 npm run lint
-npm run test -- --run
-npm run test:e2e
+npm run test         # vitest: ephemeris, springs, quality controller
+npm run test:e2e     # playwright: rendering, budgets, interaction
 ```
 
-## Project Structure
-
-```text
-Interactive_Solar_System/
-├── public/                  # Static assets
-├── src/
-│   ├── components/          # UI and 3D scene components
-│   ├── shaders/             # Custom shader code
-│   ├── stores/              # Zustand stores
-│   ├── test/                # Unit tests
-│   ├── utils/               # Utilities and calculations
-│   └── wasm/                # Experimental/native helpers
-├── tests/                   # End-to-end tests
-├── Dockerfile
-├── docker-compose.yml
-└── vite.config.ts
-```
-
-## Documentation
-
-Additional project notes live in the repo:
-
-- `PROJECT_ARCHITECTURE.md`
-- `EDUCATIONAL_FEATURES.md`
-- `COMPLETION_SUMMARY.md`
-
-## Deployment
-
-### Static hosting
+The e2e suite needs a Chromium with working WebGL2. If your environment ships
+one Playwright did not install itself, point at it:
 
 ```bash
-npm run build
+PLAYWRIGHT_CHROMIUM_PATH=/path/to/chrome npm run test:e2e
 ```
 
-Deploy the generated `dist/` directory to your preferred static host.
+`?tier=ultra|high|balanced|efficient|minimal` forces a quality tier, which is
+how you exercise the bloom and atmosphere paths on a software renderer.
 
-### Docker
+### Layout
 
-```bash
-docker build -t interactive-solar-system .
-docker run --rm -p 8080:80 interactive-solar-system
+```
+src/
+  sim/        clock, ephemeris, world state, floating origin, springs
+  scene/      the single useFrame driver, scene graph, picking, composer
+  gfx/        bakery (procedural cube maps), shaders, materials, geometry
+  camera/     orbit / follow / free-flight rig
+  perf/       device probe, quality tiers, adaptive controller
+  state/      discrete UI store, 10 Hz telemetry channel
+  data/       body definitions and dual-track copy
+  ui/         design system, panels, jog wheel, labels
+  audio/      Web Audio synthesis (no asset files)
+tools/        screenshot + tour harnesses used to verify the render
 ```
 
 ## License
 
-MIT License
+MIT.
