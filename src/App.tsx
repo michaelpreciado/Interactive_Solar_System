@@ -1,302 +1,119 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Stars } from '@react-three/drei';
-import { SolarSystem } from './components/SolarSystem';
-import { ControlPanel } from './components/ControlPanel';
-import { TimeScrubber } from './components/TimeScrubber';
-import { PlanetInfo } from './components/PlanetInfo';
-import { EducationalDashboard } from './components/EducationalDashboard';
-import { FactDisplay } from './components/FactDisplay';
-import { QuizDisplay } from './components/QuizDisplay';
-import { LessonPlayer } from './components/LessonPlayer';
-import { PlanetComparison } from './components/PlanetComparison';
-import {
-  useUIStore,
-  useReducedMotionDetector,
-  usePerformanceMonitor,
-} from './stores/useUIStore';
-import { useEducationStore } from './stores/useEducationStore';
-import { useTimeStore } from './stores/useTimeStore';
-import { getPlanetPositions } from './utils/planetaryCalculations';
-import {
-  createMemoryMonitor,
-  throttle,
-  debounce,
-} from './utils/performanceUtils';
-import { logger } from './utils/logger';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ACESFilmicToneMapping, NoToneMapping } from 'three';
 
-const LoadingSpinner = () => (
-  <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-xl">
-    <div className="lg-island text-center p-8 animate-lg-scale-in">
-      <div className="loading-spinner mx-auto mb-6"></div>
-      <h3 className="text-white font-bold text-lg mb-2">
-        Loading Solar System
-      </h3>
-      <p className="text-gray-400 text-sm">Preparing your cosmic journey...</p>
-      <div className="mt-6 space-y-3">
-        <div className="skeleton skeleton-text"></div>
-        <div className="skeleton skeleton-text w-3/4 mx-auto"></div>
-      </div>
-    </div>
-  </div>
-);
+import { Scene } from './scene/Scene';
+import { SceneDriver } from './scene/SceneDriver';
+import { createDriverHandle } from './scene/driverHandle';
+import { Composer } from './scene/Composer';
+import { Pointer } from './scene/Pointer';
+import { quality } from './perf/QualityManager';
+import { initialTier, probeDevice, tierFromUrl } from './perf/tiers';
+import { useUIStore } from './state/uiStore';
+import { LoadingScreen } from './ui/LoadingScreen';
+import { Hud } from './ui/Hud';
+import { DebugHud } from './perf/DebugHud';
+import { useKeyboardShortcuts } from './ui/useKeyboardShortcuts';
+import { audio } from './audio/engine';
 
-function App() {
-  const {
-    selectedPlanet,
-    scaleMode,
-    performanceSettings,
-    deviceCapabilities,
-    prefersReducedMotion,
-    setDevicePixelRatio,
-  } = useUIStore();
+export default function App() {
+  const labelLayer = useRef<HTMLDivElement>(null);
+  const handle = useMemo(() => createDriverHandle(), []);
+  const [bakeProgress, setBakeProgress] = useState(0);
+  const [ready, setReady] = useState(false);
+  const setReducedMotion = useUIStore((s) => s.setReducedMotion);
 
-  const { currentTime } = useTimeStore();
+  // Probe the device and pick a starting tier before the canvas mounts, so the
+  // first bake happens at the right resolution rather than being redone.
+  const [dpr] = useState(() => {
+    const probe = probeDevice();
+    const forced = tierFromUrl();
+    const tier = initialTier(probe);
+    if (forced) {
+      quality.locked = true;
+      quality.setTier(forced, 'url override');
+    } else if (useUIStore.getState().tierAuto) {
+      quality.setTier(tier, 'device probe');
+    } else {
+      quality.setTier(useUIStore.getState().tier, 'user preference');
+    }
+    return Math.min(window.devicePixelRatio || 1, quality.settings.maxDpr);
+  });
 
-  const { showComparison, clearComparison } = useEducationStore();
+  useEffect(() => {
+    quality.detectRefreshRate().then((hz) => {
+      const target = useUIStore.getState().targetFps;
+      quality.setTargetFps(Math.min(hz, target));
+    });
+  }, []);
 
-  const [showEducationalDashboard, setShowEducationalDashboard] =
-    useState(false);
-
-  useReducedMotionDetector();
-  usePerformanceMonitor();
-
-  const memoryMonitor = useMemo(() => createMemoryMonitor(), []);
-
-  const checkMemory = useMemo(
+  // Keep the store's tier in sync when the adaptive controller changes it, so
+  // the settings panel shows the truth. This fires at most once every 5 s.
+  useEffect(
     () =>
-      throttle(() => {
-        const result = memoryMonitor.checkMemoryUsage();
-        if (result.warning) {
-          logger.warn(
-            'High memory usage detected; consider reducing quality settings.',
-            { usage: result.usage }
-          );
-        }
-      }, 5000),
-    [memoryMonitor]
-  );
-
-  const handleResize = useMemo(
-    () =>
-      debounce(() => {
-        setDevicePixelRatio(window.devicePixelRatio);
-      }, 300),
-    [setDevicePixelRatio]
+      quality.subscribe((settings) => {
+        useUIStore.setState({ tier: settings.name });
+      }),
+    []
   );
 
   useEffect(() => {
-    const memoryInterval = setInterval(checkMemory, 10000);
-    window.addEventListener('resize', handleResize);
-    return () => {
-      clearInterval(memoryInterval);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [checkMemory, handleResize]);
+    if (typeof matchMedia === 'undefined') return;
+    const mq = matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setReducedMotion(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [setReducedMotion]);
 
-  const planets = useMemo(() => {
-    return getPlanetPositions(currentTime, scaleMode);
-  }, [currentTime, scaleMode]);
+  useKeyboardShortcuts(handle);
 
-  const selectedPlanetData = useMemo(() => {
-    if (!selectedPlanet) return null;
-    return (
-      planets.find(
-        (planet) => planet.name.toLowerCase() === selectedPlanet.toLowerCase()
-      ) || null
-    );
-  }, [selectedPlanet, planets]);
+  useEffect(() => () => audio.dispose(), []);
 
-  const cameraSettings = useMemo(
-    () => ({
-      position: [50, 50, 50] as [number, number, number],
-      fov: deviceCapabilities.isMobile ? 60 : 75,
-      near: 0.1,
-      far:
-        scaleMode === 'realistic'
-          ? 10000
-          : scaleMode === 'logarithmic'
-            ? 5000
-            : 2000,
-    }),
-    [deviceCapabilities.isMobile, scaleMode]
-  );
+  const onBakeProgress = useCallback((done: number, total: number) => {
+    setBakeProgress(done / total);
+  }, []);
 
-  const canvasConfig = useMemo(
-    () => ({
-      dpr: deviceCapabilities.pixelRatio,
-      antialias: !deviceCapabilities.isMobile,
-      alpha: false,
-      powerPreference: (deviceCapabilities.isMobile ? 'default' : 'high-performance') as WebGLPowerPreference,
-      failIfMajorPerformanceCaveat: false,
-      preserveDrawingBuffer: false,
-      premultipliedAlpha: false,
-      depth: true,
-      stencil: false,
-      shadows: performanceSettings.enableShadows,
-    }),
-    [
-      deviceCapabilities.pixelRatio,
-      deviceCapabilities.isMobile,
-      performanceSettings.enableShadows,
-    ]
-  );
-
-  const controlsConfig = useMemo(() => {
-    const baseDistance =
-      scaleMode === 'realistic'
-        ? 2000
-        : scaleMode === 'logarithmic'
-          ? 1000
-          : 500;
-    return {
-      enablePan: true,
-      enableZoom: true,
-      enableRotate: true,
-      autoRotate: !prefersReducedMotion,
-      autoRotateSpeed: 0.3,
-      zoomSpeed: deviceCapabilities.isMobile ? 0.3 : 0.6,
-      panSpeed: deviceCapabilities.isMobile ? 0.3 : 0.8,
-      rotateSpeed: deviceCapabilities.isMobile ? 0.3 : 0.5,
-      minDistance: 5,
-      maxDistance: baseDistance,
-      minPolarAngle: 0,
-      maxPolarAngle: Math.PI,
-      enableDamping: true,
-      dampingFactor: 0.05,
-      touches: {
-        ONE: 2,
-        TWO: 1,
-      },
-    };
-  }, [scaleMode, deviceCapabilities.isMobile, prefersReducedMotion]);
-
-  const starsConfig = useMemo(() => {
-    if (!performanceSettings.enableStarfield) return null;
-    return {
-      radius:
-        scaleMode === 'realistic'
-          ? 1500
-          : scaleMode === 'logarithmic'
-            ? 1000
-            : 600,
-      depth: 100,
-      count: performanceSettings.starfieldCount,
-      factor: 4,
-      saturation: 0,
-      fade: true,
-      speed: prefersReducedMotion ? 0 : 0.5,
-    };
-  }, [
-    performanceSettings.enableStarfield,
-    performanceSettings.starfieldCount,
-    scaleMode,
-    prefersReducedMotion,
-  ]);
+  const onReady = useCallback(() => setReady(true), []);
 
   return (
-    <div className="w-full h-screen [height:100dvh] bg-space-dark overflow-hidden">
-      {/* Main Canvas */}
+    <div className="app-root">
       <Canvas
-        camera={cameraSettings}
-        {...canvasConfig}
-        className="w-full h-full"
+        dpr={dpr}
+        gl={{
+          antialias: false, // MSAA is configured on the composer's render target
+          alpha: false,
+          powerPreference: 'high-performance',
+          stencil: false,
+          depth: true,
+          // Normally false: keeping the drawing buffer costs memory and can
+          // cost a copy. `?probe=1` enables it so tests can read pixels back
+          // and assert the scene actually rendered.
+          preserveDrawingBuffer:
+            typeof location !== 'undefined' &&
+            new URLSearchParams(location.search).has('probe'),
+        }}
+        camera={{ fov: 55, near: 0.1, far: 1e7, position: [0, 220, 620] }}
+        onCreated={({ gl }) => {
+          // Tone mapping happens inside the composer, after bloom. Doing it
+          // here as well would crush the HDR range before it can bloom.
+          gl.toneMapping = quality.settings.bloomLevels > 0
+            ? NoToneMapping
+            : ACESFilmicToneMapping;
+        }}
       >
-        <Suspense fallback={null}>
-          {/* Starfield */}
-          {starsConfig && (
-            <Stars
-              radius={starsConfig.radius}
-              depth={starsConfig.depth}
-              count={starsConfig.count}
-              factor={starsConfig.factor}
-              saturation={starsConfig.saturation}
-              fade={starsConfig.fade}
-              speed={starsConfig.speed}
-            />
-          )}
-
-          {/* Solar System (includes its own lights) */}
-          <SolarSystem planets={planets} />
-
-          {/* Camera Controls */}
-          <OrbitControls {...controlsConfig} />
-        </Suspense>
+        <Scene labelLayer={labelLayer} onBakeProgress={onBakeProgress} />
+        <SceneDriver handle={handle} labelLayer={labelLayer} onReady={onReady} />
+        <Pointer handle={handle} />
+        <Composer />
       </Canvas>
 
-      {/* Responsive UI Overlay */}
-      <div className="absolute inset-0 pointer-events-none safe-top safe-bottom safe-left safe-right">
-        {/* Desktop Layout */}
-        <div className="hidden md:block">
-          <div className="absolute top-4 left-4 pointer-events-auto animate-lg-slide-in">
-            <ControlPanel />
-          </div>
+      {/* Labels live outside the canvas and are positioned by direct transform
+          writes from the driver -- no React involvement per frame. */}
+      <div ref={labelLayer} className="label-layer" aria-hidden="true" />
 
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-auto animate-lg-fade-in">
-            <button
-              onClick={() => setShowEducationalDashboard(true)}
-              className="lg-button-primary px-6 py-3 hover-lift hover-glow shadow-lg"
-            >
-              <span className="text-lg mr-2">🎓</span>
-              <span className="font-semibold">Learning Center</span>
-            </button>
-          </div>
-
-          {selectedPlanetData && (
-            <div className="absolute top-4 right-4 pointer-events-auto animate-lg-scale-in">
-              <PlanetInfo planet={selectedPlanetData} />
-            </div>
-          )}
-
-          <div className="absolute bottom-4 left-4 right-4 pointer-events-auto">
-            <TimeScrubber />
-          </div>
-        </div>
-
-        {/* Mobile Layout */}
-        <div className="md:hidden">
-          <div className="absolute top-3 left-3 pointer-events-auto animate-lg-slide-in">
-            <ControlPanel />
-          </div>
-
-          <div className="absolute top-3 right-3 pointer-events-auto animate-lg-fade-in">
-            <button
-              onClick={() => setShowEducationalDashboard(true)}
-              className="lg-play-compact hover-scale shadow-lg"
-              aria-label="Open Learning Center"
-            >
-              <span className="text-xl">🎓</span>
-            </button>
-          </div>
-
-          {selectedPlanetData && (
-            <div className="absolute bottom-20 left-3 right-3 pointer-events-auto animate-lg-bounce-in">
-              <PlanetInfo planet={selectedPlanetData} />
-            </div>
-          )}
-
-          <div className="absolute bottom-3 left-3 right-3 pointer-events-auto">
-            <TimeScrubber />
-          </div>
-        </div>
-      </div>
-
-      {/* Educational Components */}
-      <EducationalDashboard
-        isOpen={showEducationalDashboard}
-        onClose={() => setShowEducationalDashboard(false)}
-      />
-
-      <PlanetComparison
-        isOpen={showComparison}
-        onClose={clearComparison}
-      />
-
-      <FactDisplay />
-      <QuizDisplay />
-      <LessonPlayer />
+      <Hud handle={handle} />
+      <DebugHud />
+      <LoadingScreen progress={bakeProgress} ready={ready} />
     </div>
   );
 }
-
-export default App;
