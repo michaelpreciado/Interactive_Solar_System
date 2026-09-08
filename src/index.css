@@ -18,8 +18,8 @@
   --ink-dim: #a9b4c6;
   --ink-faint: #6d7889;
 
-  --glass: rgb(16 19 27 / 0.62);
-  --glass-strong: rgb(13 16 23 / 0.82);
+  --glass: rgb(9 12 18 / 0.66);
+  --glass-strong: rgb(8 11 17 / 0.84);
   --hairline: rgb(255 255 255 / 0.09);
   --hairline-strong: rgb(255 255 255 / 0.16);
 
@@ -106,6 +106,92 @@ canvas {
   height: 100%;
 }
 
+/* A restrained anamorphic treatment over the realtime render. The scene stays
+   interactive while the edge falloff, hairline frame and grain give every
+   camera angle the finish of a deep-space film plate. */
+.app-root::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 50% 46%,
+      transparent 38%,
+      rgb(0 0 0 / 0.18) 72%,
+      rgb(0 0 0 / 0.66) 120%
+    ),
+    linear-gradient(
+      180deg,
+      rgb(2 5 10 / 0.2),
+      transparent 28%,
+      transparent 72%,
+      rgb(2 4 8 / 0.3)
+    );
+}
+
+.cinematic-frame {
+  position: absolute;
+  inset: 9px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.cinematic-frame__corner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  opacity: 0.3;
+}
+.cinematic-frame__corner--tl {
+  top: 0;
+  left: 0;
+  border-top: 1px solid white;
+  border-left: 1px solid white;
+}
+.cinematic-frame__corner--tr {
+  top: 0;
+  right: 0;
+  border-top: 1px solid white;
+  border-right: 1px solid white;
+}
+.cinematic-frame__corner--bl {
+  bottom: 0;
+  left: 0;
+  border-bottom: 1px solid white;
+  border-left: 1px solid white;
+}
+.cinematic-frame__corner--br {
+  right: 0;
+  bottom: 0;
+  border-right: 1px solid white;
+  border-bottom: 1px solid white;
+}
+
+.cinematic-frame__grain {
+  position: absolute;
+  inset: -9px;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
+  animation: film-grain 0.24s steps(2) infinite;
+}
+
+@keyframes film-grain {
+  0% {
+    transform: translate3d(-1%, -1%, 0);
+  }
+  25% {
+    transform: translate3d(1%, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, 1%, 0);
+  }
+  75% {
+    transform: translate3d(-1%, 1%, 0);
+  }
+}
+
 /* ===========================================================================
    Labels — positioned by direct transform writes from the driver
    =========================================================================== */
@@ -177,6 +263,20 @@ canvas {
   margin-right: auto;
 }
 
+.brand__lockup {
+  display: grid;
+  gap: 1px;
+}
+
+.brand__eyebrow {
+  color: var(--ink-faint);
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 0.2em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .brand__mark {
   width: 22px;
   height: 22px;
@@ -194,10 +294,43 @@ canvas {
 }
 
 .brand__name {
-  font-size: 15px;
-  font-weight: 650;
-  letter-spacing: 0.055em;
+  font-size: 17px;
+  font-weight: 590;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
+}
+
+.mission-readout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-faint);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.mission-readout__pulse {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #a6efc4;
+  box-shadow: 0 0 10px #83eaae;
+  animation: signal 2.4s ease-in-out infinite;
+}
+
+.mission-readout__divider {
+  width: 18px;
+  height: 1px;
+  background: var(--hairline-strong);
+}
+
+@keyframes signal {
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
 }
 
 .hud__top-actions {
@@ -1065,6 +1198,14 @@ input[type='range']::-moz-range-thumb {
   letter-spacing: 0.15em;
   text-transform: uppercase;
 }
+.loading__chapter {
+  margin: 0 0 9px;
+  color: #ffbd73;
+  font-size: 9px;
+  font-weight: 620;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
 .loading__sub {
   margin: 6px 0 22px;
   font-size: 12.5px;
@@ -1166,6 +1307,9 @@ input[type='range']::-moz-range-thumb {
 
      node tools/measure.mjs */
 @media (max-width: 860px) {
+  .mission-readout {
+    display: none;
+  }
   .hud {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto auto;
@@ -1341,6 +1485,10 @@ input[type='range']::-moz-range-thumb {
 
 /* Respect the user's motion preference everywhere the springs don't already. */
 @media (prefers-reduced-motion: reduce) {
+  .cinematic-frame__grain,
+  .mission-readout__pulse {
+    animation: none;
+  }
   *,
   *::before,
   *::after {
