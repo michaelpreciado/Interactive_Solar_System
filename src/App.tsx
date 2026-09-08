@@ -91,13 +91,18 @@ export default function App() {
         onCreated={({ gl }) => {
           // Tone mapping happens inside the composer, after bloom. Doing it
           // here as well would crush the HDR range before it can bloom.
-          gl.toneMapping = quality.settings.bloomLevels > 0
-            ? NoToneMapping
-            : ACESFilmicToneMapping;
+          gl.toneMapping =
+            quality.settings.bloomLevels > 0
+              ? NoToneMapping
+              : ACESFilmicToneMapping;
         }}
       >
         <Scene labelLayer={labelLayer} onBakeProgress={onBakeProgress} />
-        <SceneDriver handle={handle} labelLayer={labelLayer} onReady={onReady} />
+        <SceneDriver
+          handle={handle}
+          labelLayer={labelLayer}
+          onReady={onReady}
+        />
         <Pointer handle={handle} />
         <Composer />
       </Canvas>
@@ -105,6 +110,14 @@ export default function App() {
       {/* Labels live outside the canvas and are positioned by direct transform
           writes from the driver -- no React involvement per frame. */}
       <div ref={labelLayer} className="label-layer" aria-hidden="true" />
+
+      <div className="cinematic-frame" aria-hidden="true">
+        <span className="cinematic-frame__corner cinematic-frame__corner--tl" />
+        <span className="cinematic-frame__corner cinematic-frame__corner--tr" />
+        <span className="cinematic-frame__corner cinematic-frame__corner--bl" />
+        <span className="cinematic-frame__corner cinematic-frame__corner--br" />
+        <span className="cinematic-frame__grain" />
+      </div>
 
       <Hud />
       <DebugHud />

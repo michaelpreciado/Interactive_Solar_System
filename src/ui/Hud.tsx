@@ -64,7 +64,17 @@ function TopBar() {
     <div className="hud__top pointer-events-auto">
       <div className="brand">
         <span className="brand__mark" aria-hidden="true" />
-        <span className="brand__name">Orrery</span>
+        <span className="brand__lockup">
+          <span className="brand__eyebrow">Deep space atlas · 01</span>
+          <span className="brand__name">Orrery</span>
+        </span>
+      </div>
+
+      <div className="mission-readout" aria-hidden="true">
+        <span className="mission-readout__pulse" />
+        <span>Live ephemeris</span>
+        <span className="mission-readout__divider" />
+        <span>Sol system</span>
       </div>
 
       <div className="segmented" role="radiogroup" aria-label="Reading level">

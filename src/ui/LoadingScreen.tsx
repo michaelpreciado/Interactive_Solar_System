@@ -24,8 +24,11 @@ export function LoadingScreen({ progress, ready }: LoadingScreenProps) {
               <span className="loading__sun" />
               <span className="loading__planet" />
             </div>
+            <p className="loading__chapter">
+              A journey through our celestial home
+            </p>
             <h1 className="loading__title">Orrery</h1>
-            <p className="loading__sub">Building worlds from first principles</p>
+            <p className="loading__sub">Rendering the known universe</p>
             <div className="loading__track" aria-hidden="true">
               <motion.div
                 className="loading__fill"
